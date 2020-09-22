@@ -1,0 +1,23 @@
+name: C/C++ CI
+
+
+on:
+  push:
+    branches: [ master ]
+
+jobs:
+  build-and-test:
+    name: Build the project and run its tests with CTest on Windows
+    runs-on: windows-latest
+
+    steps:
+    - uses: actions/checkout@v2
+    - name: install pipenv
+      run: python -m pip install pipenv
+    - name: CMake configuration
+      run: cmake -B build $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=RELEASE
+    - name: Build
+      run: cmake --build build --config release
+    - name: Run tests
+      run: ctest -C release
+      working-directory: build/tests

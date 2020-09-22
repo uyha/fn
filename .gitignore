@@ -1,0 +1,16 @@
+# Build folders
+build/**
+cmake-build-*/
+
+# VS Code
+.vscode/settings.json
+
+# Jetbrains
+.idea/**
+
+# Pipenv
+Pipfile.lock
+
+# Visual Studio
+.vs/**
+out/**
