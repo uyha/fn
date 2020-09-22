@@ -5,7 +5,6 @@ project("ProjectName"
         LANGUAGES C CXX)
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
-include(pipenv)
 include(dependencies)
 
 add_subdirectory(external)

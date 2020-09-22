@@ -1,6 +1,4 @@
-find_package(fmt)
-
-add_executable(main "main.cpp")
-target_link_libraries(main PRIVATE fmt::fmt)
-target_compile_features(main PRIVATE cxx_std_20)
-
+add_library(fn INTERFACE)
+add_library(fn::fn ALIAS fn)
+target_include_directories(fn INTERFACE ${CMAKE_CURRENT_LIST_DIR})
+target_compile_features(fn INTERFACE cxx_std_17)
