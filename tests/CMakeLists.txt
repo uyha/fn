@@ -10,4 +10,5 @@ macro(construct_test name)
             COMMAND ${name})
 endmacro()
 
-construct_test(test_name)
+construct_test(free_functions free_functions.cpp)
+construct_test(member_functions member_functions.cpp)

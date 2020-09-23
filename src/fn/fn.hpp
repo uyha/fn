@@ -42,15 +42,16 @@ constexpr T &&forward(typename remove_reference<T>::type &&t) noexcept {
 template <auto fp>
 struct fn {
   template <typename... Args>
-  constexpr auto operator()(Args &&... args) noexcept(noexcept(fp(detail::forward<Args>(args)...)))
-      -> decltype(fp(detail::forward<Args>(args)...)) {
+  constexpr auto operator()(Args &&... args) const
+      noexcept(noexcept(fp(detail::forward<Args>(args)...)))
+          -> decltype(fp(detail::forward<Args>(args)...)) {
     return fp(detail::forward<Args>(args)...);
   }
   template <typename T, typename... Args>
-  constexpr auto operator()(T &&t, Args &&... args) noexcept(
-      noexcept((detail::forward<T>(fp).*fp)(detail::forward<Args>(args)...)))
-      -> decltype((detail::forward<T>(fp).*fp)(detail::forward<Args>(args)...)) {
-    return (detail::forward<T>(fp).*fp)(detail::forward<Args>(args)...);
+  constexpr auto operator()(T &&t, Args &&... args) const
+      noexcept(noexcept((detail::forward<T>(t).*fp)(detail::forward<Args>(args)...)))
+          -> decltype((detail::forward<T>(t).*fp)(detail::forward<Args>(args)...)) {
+    return (detail::forward<T>(t).*fp)(detail::forward<Args>(args)...);
   }
 };
 } // namespace fn
