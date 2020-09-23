@@ -57,21 +57,84 @@ constexpr T &&forward(typename remove_reference<T>::type &&t) noexcept {
   static_assert(!is_lvalue_reference<T>::value);
   return static_cast<T &&>(t);
 }
+
+template <typename T, T>
+struct FnImpl;
+
+// region Free functions
+template <typename R, typename... Args, R (*fn)(Args...)>
+struct FnImpl<decltype(fn), fn> {
+  constexpr R operator()(Args &&... args) const {
+    return fn(forward<Args>(args)...);
+  }
+};
+template <typename R, typename... Args, R (*fn)(Args...) noexcept>
+struct FnImpl<decltype(fn), fn> {
+  constexpr R operator()(Args &&... args) const noexcept {
+    return fn(forward<Args>(args)...);
+  }
+};
+// endregion
+
+// region Member functions
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...)>
+struct FnImpl<decltype(fn), fn> {
+  constexpr R operator()(T &obj, Args &&... args) const {
+    return (obj.*fn)(forward<Args>(args)...);
+  }
+  constexpr R operator()(T &&obj, Args &&... args) const {
+    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const>
+struct FnImpl<decltype(fn), fn> {
+  constexpr R operator()(T const &obj, Args &&... args) const {
+    return (obj.*fn)(forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) noexcept>
+struct FnImpl<decltype(fn), fn> {
+  constexpr R operator()(T &obj, Args &&... args) const noexcept {
+    return (obj.*fn)(forward<Args>(args)...);
+  }
+  constexpr R operator()(T &&obj, Args &&... args) const noexcept {
+    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const noexcept>
+struct FnImpl<decltype(fn), fn> {
+  constexpr R operator()(T const &obj, Args &&... args) const noexcept {
+    return (obj.*fn)(forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&>
+struct FnImpl<decltype(fn), fn> {
+  constexpr R operator()(T &&obj, Args &&... args) const {
+    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &&>
+struct FnImpl<decltype(fn), fn> {
+  constexpr R operator()(T const &&obj, Args &&... args) const {
+    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&noexcept>
+struct FnImpl<decltype(fn), fn> {
+  constexpr R operator()(T &&obj, Args &&... args) const noexcept {
+    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &&noexcept>
+struct FnImpl<decltype(fn), fn> {
+  constexpr R operator()(T const &&obj, Args &&... args) const noexcept {
+    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  }
+};
+// endregion
+
 } // namespace detail
 
 template <auto fp>
-struct fn {
-  template <typename... Args>
-  constexpr auto operator()(Args &&... args) const
-      noexcept(noexcept(fp(detail::forward<Args>(args)...)))
-          -> decltype(fp(detail::forward<Args>(args)...)) {
-    return fp(detail::forward<Args>(args)...);
-  }
-  template <typename T, typename... Args>
-  constexpr auto operator()(T &&t, Args &&... args) const
-      noexcept(noexcept((detail::forward<T>(t).*fp)(detail::forward<Args>(args)...)))
-          -> decltype((detail::forward<T>(t).*fp)(detail::forward<Args>(args)...)) {
-    return (detail::forward<T>(t).*fp)(detail::forward<Args>(args)...);
-  }
-};
+using fn = detail::FnImpl<decltype(fp), fp>;
 } // namespace fn

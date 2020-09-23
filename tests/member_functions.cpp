@@ -60,4 +60,11 @@ TEST_CASE("Member functions can be invoke with the object as its first argument"
   CHECK(noexcept(fn::fn<&A::rvalue_fn_noexcept>{}(A{0})));
   CHECK(fn::fn<&A::rvalue_fn_const_noexcept>{}(A{0}) == 0);
   CHECK(noexcept(fn::fn<&A::rvalue_fn_const_noexcept>{}(A{0})));
+
+  CHECK(fn::fn<&A::fn_const>{}(std::move(one)) == 1);
+  CHECK(fn::fn<&A::fn_const_noexcept>{}(std::move(one)) == 1);
+  CHECK(noexcept(fn::fn<&A::fn_const_noexcept>{}(std::move(one))));
+  CHECK(fn::fn<&A::rvalue_fn_const>{}(std::move(one)) == 1);
+  CHECK(fn::fn<&A::rvalue_fn_const_noexcept>{}(std::move(one)) == 1);
+  CHECK(noexcept(fn::fn<&A::rvalue_fn_const_noexcept>{}(std::move(one))));
 }
