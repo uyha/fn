@@ -48,6 +48,12 @@ TEST_CASE("Member functions can be invoke with the object as its first argument"
   CHECK(fn::fn<&A::fn_const_noexcept>{}(one) == 1);
   CHECK(noexcept(fn::fn<&A::fn_const_noexcept>{}(one)));
 
+  CHECK(fn::fn<&A::fn>{}(A{0}) == 0);
+  CHECK(fn::fn<&A::fn_const>{}(A{0}) == 0);
+  CHECK(fn::fn<&A::fn_noexcept>{}(A{0}) == 0);
+  CHECK(noexcept(fn::fn<&A::fn_noexcept>{}(A{0})));
+  CHECK(fn::fn<&A::fn_const_noexcept>{}(A{0}) == 0);
+  CHECK(noexcept(fn::fn<&A::fn_const_noexcept>{}(A{0})));
   CHECK(fn::fn<&A::rvalue_fn>{}(A{0}) == 0);
   CHECK(fn::fn<&A::rvalue_fn_const>{}(A{0}) == 0);
   CHECK(fn::fn<&A::rvalue_fn_noexcept>{}(A{0}) == 0);
