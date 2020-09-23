@@ -12,3 +12,5 @@ endmacro()
 
 construct_test(free_functions free_functions.cpp)
 construct_test(member_functions member_functions.cpp)
+construct_test(sml_integration sml_integration.cpp)
+target_link_libraries(sml_integration PRIVATE headers-only)

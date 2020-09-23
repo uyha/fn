@@ -23,6 +23,9 @@
 // DEALINGS IN THE SOFTWARE.
 
 #pragma once
+#ifndef FN_ENABLE_OVERLOAD
+#define FN_ENABLE_OVERLOAD 1
+#endif
 
 namespace fn {
 namespace detail {
@@ -82,9 +85,11 @@ struct FnImpl<decltype(fn), fn> {
   constexpr R operator()(T &obj, Args &&... args) const {
     return (obj.*fn)(forward<Args>(args)...);
   }
+#if FN_ENABLE_OVERLOAD
   constexpr R operator()(T &&obj, Args &&... args) const {
     return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
   }
+#endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const>
 struct FnImpl<decltype(fn), fn> {
@@ -97,9 +102,11 @@ struct FnImpl<decltype(fn), fn> {
   constexpr R operator()(T &obj, Args &&... args) const noexcept {
     return (obj.*fn)(forward<Args>(args)...);
   }
+#if FN_ENABLE_OVERLOAD
   constexpr R operator()(T &&obj, Args &&... args) const noexcept {
     return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
   }
+#endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const noexcept>
 struct FnImpl<decltype(fn), fn> {
