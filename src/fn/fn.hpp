@@ -73,9 +73,15 @@ struct FnImpl<decltype(fn), fn> {
 };
 template <typename R, typename... Args, R (*fn)(Args...) noexcept>
 struct FnImpl<decltype(fn), fn> {
+#ifdef _MSC_VER
+  constexpr R operator()(Args &&... args) const {
+    return fn(forward<Args>(args)...);
+  }
+#else
   constexpr R operator()(Args &&... args) const noexcept {
     return fn(forward<Args>(args)...);
   }
+#endif
 };
 // endregion
 
@@ -99,20 +105,38 @@ struct FnImpl<decltype(fn), fn> {
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) noexcept>
 struct FnImpl<decltype(fn), fn> {
+#ifdef _MSC_VER
+  constexpr R operator()(T &obj, Args &&... args) const {
+    return (obj.*fn)(forward<Args>(args)...);
+  }
+#else
   constexpr R operator()(T &obj, Args &&... args) const noexcept {
     return (obj.*fn)(forward<Args>(args)...);
   }
+#endif
 #if FN_ENABLE_OVERLOAD
+#ifdef _MSC_VER
+  constexpr R operator()(T &&obj, Args &&... args) const {
+    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  }
+#else
   constexpr R operator()(T &&obj, Args &&... args) const noexcept {
     return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
   }
 #endif
+#endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const noexcept>
 struct FnImpl<decltype(fn), fn> {
+#ifdef _MSC_VER
+  constexpr R operator()(T const &obj, Args &&... args) const {
+    return (obj.*fn)(forward<Args>(args)...);
+  }
+#else
   constexpr R operator()(T const &obj, Args &&... args) const noexcept {
     return (obj.*fn)(forward<Args>(args)...);
   }
+#endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&>
 struct FnImpl<decltype(fn), fn> {
@@ -128,15 +152,27 @@ struct FnImpl<decltype(fn), fn> {
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&noexcept>
 struct FnImpl<decltype(fn), fn> {
+#ifdef _MSC_VER
+  constexpr R operator()(T &&obj, Args &&... args) const {
+    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  }
+#else
   constexpr R operator()(T &&obj, Args &&... args) const noexcept {
     return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
   }
+#endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &&noexcept>
 struct FnImpl<decltype(fn), fn> {
+#ifdef _MSC_VER
+  constexpr R operator()(T const &&obj, Args &&... args) const {
+    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  }
+#else
   constexpr R operator()(T const &&obj, Args &&... args) const noexcept {
     return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
   }
+#endif
 };
 // endregion
 

@@ -50,9 +50,9 @@ TEST_CASE("Integration with sml") {
   SM state{};
   auto state_machine = boost::sml::sm<SM>{state};
   state_machine.process_event(next{});
-  state_machine.process_event(next{});
-  state_machine.process_event(next{});
-  state_machine.process_event(next{});
-  state_machine.process_event(next{});
-  state_machine.process_event(next{});
+  //  state_machine.process_event(next{});
+  //  state_machine.process_event(next{});
+  //  state_machine.process_event(next{});
+  //  state_machine.process_event(next{});
+  //  state_machine.process_event(next{});
 }
