@@ -5,7 +5,6 @@ find_package(fmt)
 macro(construct_test name)
     add_executable(${name} main.cpp ${ARGN})
     target_link_libraries(${name} PRIVATE Catch2::Catch2 fmt::fmt fn::fn)
-    target_compile_features(${name} PRIVATE cxx_std_17)
     add_test(
             NAME ${name}
             COMMAND ${name})

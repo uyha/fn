@@ -38,15 +38,18 @@ struct A {
 
 TEST_CASE("Member functions can be invoke with the object as its first argument") {
   A zero{0};
+  CHECK(fn<&A::a>{}(zero) == 0);
   CHECK(fn<&A::fn>{}(zero) == 0);
   CHECK(fn<&A::fn_const>{}(zero) == 0);
   CHECK(fn<&A::fn_noexcept>{}(zero) == 0);
   CHECK(fn<&A::fn_const_noexcept>{}(zero) == 0);
 
   A const one{1};
+  CHECK(fn<&A::a>{}(one) == 1);
   CHECK(fn<&A::fn_const>{}(one) == 1);
   CHECK(fn<&A::fn_const_noexcept>{}(one) == 1);
 
+  CHECK(fn<&A::a>{}(A{0}) == 0);
   CHECK(fn<&A::fn>{}(A{0}) == 0);
   CHECK(fn<&A::fn_const>{}(A{0}) == 0);
   CHECK(fn<&A::fn_noexcept>{}(A{0}) == 0);
@@ -56,6 +59,7 @@ TEST_CASE("Member functions can be invoke with the object as its first argument"
   CHECK(fn<&A::rvalue_fn_noexcept>{}(A{0}) == 0);
   CHECK(fn<&A::rvalue_fn_const_noexcept>{}(A{0}) == 0);
 
+  CHECK(fn<&A::a>{}(std::move(one)) == 1);
   CHECK(fn<&A::fn_const>{}(std::move(one)) == 1);
   CHECK(fn<&A::fn_const_noexcept>{}(std::move(one)) == 1);
   CHECK(fn<&A::rvalue_fn_const>{}(std::move(one)) == 1);

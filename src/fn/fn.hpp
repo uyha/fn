@@ -60,6 +60,118 @@ struct is_lvalue_reference<T &> {
 };
 
 template <typename T>
+struct is_member_function_pointer {
+  static constexpr bool value = false;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...)> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) const> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) volatile> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) const volatile> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) &> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) const &> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) volatile &> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) const volatile &> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) &&> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) const &&> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) volatile &&> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) const volatile &&> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) noexcept> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) const noexcept> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) volatile noexcept> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) const volatile noexcept> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) &noexcept> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) const &noexcept> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) volatile &noexcept> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) const volatile &noexcept> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) &&noexcept> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) const &&noexcept> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) volatile &&noexcept> {
+  static constexpr bool value = true;
+};
+template <typename R, typename T, typename... Args>
+struct is_member_function_pointer<R (T::*)(Args...) const volatile &&noexcept> {
+  static constexpr bool value = true;
+};
+template <typename T>
+constexpr bool is_member_function_pointer_v = is_member_function_pointer<T>::value;
+
+template <bool, typename T = void>
+struct enable_if;
+template <typename T>
+struct enable_if<true, T> {
+  using type = T;
+};
+template <bool cond, typename T = void>
+using enable_if_t = typename enable_if<cond, T>::type;
+
+template <typename T>
 constexpr T &&forward(typename remove_reference<T>::type &t) noexcept {
   return static_cast<T &&>(t);
 }
@@ -182,6 +294,22 @@ struct FnImpl<decltype(fn), fn> {
   }
 #endif
 };
+
+#if __cpp_concepts >= 201907
+template <typename R, typename T, R(T::*fn)>
+requires(!is_member_function_pointer_v<decltype(fn)>) struct FnImpl<decltype(fn), fn> {
+  constexpr R operator()(T const &obj) const {
+    return obj.*fn;
+  }
+};
+#else
+template <typename R, typename T, R(T::*fn)>
+struct FnImpl<enable_if_t<!is_member_function_pointer_v<decltype(fn)>, decltype(fn)>, fn> {
+  constexpr R operator()(T const &obj) const {
+    return obj.*fn;
+  }
+};
+#endif
 // endregion
 
 } // namespace detail
