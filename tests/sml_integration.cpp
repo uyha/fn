@@ -10,18 +10,17 @@
 #include <sml/sml.hpp>
 
 struct next {};
+struct s1 {};
+struct s2 {};
+struct s3 {};
+struct s4 {};
+struct s5 {};
+struct s6 {};
 
 void action1_impl() {}
 void action2_impl() noexcept {}
 
 struct SM {
-  struct s1 {};
-  struct s2 {};
-  struct s3 {};
-  struct s4 {};
-  struct s5 {};
-  struct s6 {};
-
   void action3_impl() {}
   void action4_impl() const {}
   void action5_impl() noexcept {}
@@ -49,10 +48,17 @@ struct SM {
 TEST_CASE("Integration with sml") {
   SM state{};
   auto state_machine = boost::sml::sm<SM>{state};
+  REQUIRE(state_machine.is(boost::sml::state<s1>));
   state_machine.process_event(next{});
-  //  state_machine.process_event(next{});
-  //  state_machine.process_event(next{});
-  //  state_machine.process_event(next{});
-  //  state_machine.process_event(next{});
-  //  state_machine.process_event(next{});
+  REQUIRE(state_machine.is(boost::sml::state<s2>));
+  state_machine.process_event(next{});
+  REQUIRE(state_machine.is(boost::sml::state<s3>));
+  state_machine.process_event(next{});
+  REQUIRE(state_machine.is(boost::sml::state<s4>));
+  state_machine.process_event(next{});
+  REQUIRE(state_machine.is(boost::sml::state<s5>));
+  state_machine.process_event(next{});
+  REQUIRE(state_machine.is(boost::sml::state<s6>));
+  state_machine.process_event(next{});
+  REQUIRE(state_machine.is(boost::sml::X));
 }

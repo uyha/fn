@@ -27,6 +27,14 @@
 #define FN_ENABLE_OVERLOAD 1
 #endif
 
+#ifndef FN_PROPAGATE_NOEXCEPT
+#ifdef _MSC_VER
+#define FN_PROPAGATE_NOEXCEPT 0
+#else
+#define FN_PROPAGATE_NOEXCEPT 1
+#endif
+#endif
+
 namespace fn {
 namespace detail {
 template <typename T>
@@ -73,12 +81,12 @@ struct FnImpl<decltype(fn), fn> {
 };
 template <typename R, typename... Args, R (*fn)(Args...) noexcept>
 struct FnImpl<decltype(fn), fn> {
-#ifdef _MSC_VER
-  constexpr R operator()(Args &&... args) const {
+#if FN_PROPAGATE_NOEXCEPT
+  constexpr R operator()(Args &&... args) const noexcept {
     return fn(forward<Args>(args)...);
   }
 #else
-  constexpr R operator()(Args &&... args) const noexcept {
+  constexpr R operator()(Args &&... args) const {
     return fn(forward<Args>(args)...);
   }
 #endif
@@ -105,22 +113,22 @@ struct FnImpl<decltype(fn), fn> {
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) noexcept>
 struct FnImpl<decltype(fn), fn> {
-#ifdef _MSC_VER
-  constexpr R operator()(T &obj, Args &&... args) const {
+#if FN_PROPAGATE_NOEXCEPT
+  constexpr R operator()(T &obj, Args &&... args) const noexcept {
     return (obj.*fn)(forward<Args>(args)...);
   }
 #else
-  constexpr R operator()(T &obj, Args &&... args) const noexcept {
+  constexpr R operator()(T &obj, Args &&... args) const {
     return (obj.*fn)(forward<Args>(args)...);
   }
 #endif
 #if FN_ENABLE_OVERLOAD
-#ifdef _MSC_VER
-  constexpr R operator()(T &&obj, Args &&... args) const {
+#if FN_PROPAGATE_NOEXCEPT
+  constexpr R operator()(T &&obj, Args &&... args) const noexcept {
     return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
   }
 #else
-  constexpr R operator()(T &&obj, Args &&... args) const noexcept {
+  constexpr R operator()(T &&obj, Args &&... args) const {
     return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
   }
 #endif
@@ -128,12 +136,12 @@ struct FnImpl<decltype(fn), fn> {
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const noexcept>
 struct FnImpl<decltype(fn), fn> {
-#ifdef _MSC_VER
-  constexpr R operator()(T const &obj, Args &&... args) const {
+#if FN_PROPAGATE_NOEXCEPT
+  constexpr R operator()(T const &obj, Args &&... args) const noexcept {
     return (obj.*fn)(forward<Args>(args)...);
   }
 #else
-  constexpr R operator()(T const &obj, Args &&... args) const noexcept {
+  constexpr R operator()(T const &obj, Args &&... args) const {
     return (obj.*fn)(forward<Args>(args)...);
   }
 #endif
@@ -152,24 +160,24 @@ struct FnImpl<decltype(fn), fn> {
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&noexcept>
 struct FnImpl<decltype(fn), fn> {
-#ifdef _MSC_VER
-  constexpr R operator()(T &&obj, Args &&... args) const {
+#if FN_PROPAGATE_NOEXCEPT
+  constexpr R operator()(T &&obj, Args &&... args) const noexcept {
     return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
   }
 #else
-  constexpr R operator()(T &&obj, Args &&... args) const noexcept {
+  constexpr R operator()(T &&obj, Args &&... args) const {
     return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
   }
 #endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &&noexcept>
 struct FnImpl<decltype(fn), fn> {
-#ifdef _MSC_VER
-  constexpr R operator()(T const &&obj, Args &&... args) const {
+#if FN_PROPAGATE_NOEXCEPT
+  constexpr R operator()(T const &&obj, Args &&... args) const noexcept {
     return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
   }
 #else
-  constexpr R operator()(T const &&obj, Args &&... args) const noexcept {
+  constexpr R operator()(T const &&obj, Args &&... args) const {
     return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
   }
 #endif
