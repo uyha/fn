@@ -181,18 +181,18 @@ constexpr T &&forward(typename remove_reference<T>::type &&t) noexcept {
   return static_cast<T &&>(t);
 }
 
-template <typename T, T>
+template <typename T, auto>
 struct FnImpl;
 
 // region Free functions
 template <typename R, typename... Args, R (*fn)(Args...)>
-struct FnImpl<decltype(fn), fn> {
+struct FnImpl<R (*)(Args...), fn> {
   constexpr R operator()(Args... args) const {
     return fn(river::detail::forward<Args>(args)...);
   }
 };
 template <typename R, typename... Args, R (*fn)(Args...) noexcept>
-struct FnImpl<decltype(fn), fn> {
+struct FnImpl<R (*)(Args...) noexcept, fn> {
 #if FN_PROPAGATE_NOEXCEPT
   constexpr R operator()(Args... args) const noexcept {
     return fn(river::detail::forward<Args>(args)...);
@@ -207,7 +207,7 @@ struct FnImpl<decltype(fn), fn> {
 
 // region Member functions
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...)>
-struct FnImpl<decltype(fn), fn> {
+struct FnImpl<R (T::*)(Args...), fn> {
   constexpr R operator()(T &obj, Args... args) const {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
@@ -218,13 +218,25 @@ struct FnImpl<decltype(fn), fn> {
 #endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const>
-struct FnImpl<decltype(fn), fn> {
+struct FnImpl<R (T::*)(Args...) const, fn> {
   constexpr R operator()(T const &obj, Args... args) const {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 };
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&>
+struct FnImpl<R (T::*)(Args...) &&, fn> {
+  constexpr R operator()(T &&obj, Args... args) const {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &&>
+struct FnImpl<R (T::*)(Args...) const &&, fn> {
+  constexpr R operator()(T const &&obj, Args... args) const {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
+  }
+};
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) noexcept>
-struct FnImpl<decltype(fn), fn> {
+struct FnImpl<R (T::*)(Args...) noexcept, fn> {
 #if FN_PROPAGATE_NOEXCEPT
   constexpr R operator()(T &obj, Args... args) const noexcept {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
@@ -247,7 +259,7 @@ struct FnImpl<decltype(fn), fn> {
 #endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const noexcept>
-struct FnImpl<decltype(fn), fn> {
+struct FnImpl<R (T::*)(Args...) const noexcept, fn> {
 #if FN_PROPAGATE_NOEXCEPT
   constexpr R operator()(T const &obj, Args... args) const noexcept {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
@@ -258,20 +270,8 @@ struct FnImpl<decltype(fn), fn> {
   }
 #endif
 };
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&>
-struct FnImpl<decltype(fn), fn> {
-  constexpr R operator()(T &&obj, Args... args) const {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &&>
-struct FnImpl<decltype(fn), fn> {
-  constexpr R operator()(T const &&obj, Args... args) const {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-};
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&noexcept>
-struct FnImpl<decltype(fn), fn> {
+struct FnImpl<R (T::*)(Args...) &&noexcept, fn> {
 #if FN_PROPAGATE_NOEXCEPT
   constexpr R operator()(T &&obj, Args... args) const noexcept {
     return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
@@ -297,14 +297,14 @@ struct FnImpl<decltype(fn), fn> {
 
 #if __cpp_concepts >= 201907
 template <typename R, typename T, R(T::*fn)>
-requires(!is_member_function_pointer_v<decltype(fn)>) struct FnImpl<decltype(fn), fn> {
+requires(!is_member_function_pointer_v<R(T::*)>) struct FnImpl<R(T::*), fn> {
   constexpr R operator()(T const &obj) const {
     return obj.*fn;
   }
 };
 #else
 template <typename R, typename T, R(T::*fn)>
-struct FnImpl<enable_if_t<!is_member_function_pointer_v<decltype(fn)>, decltype(fn)>, fn> {
+struct FnImpl<enable_if_t<!is_member_function_pointer_v<R(T::*)>, R(T::*)>, fn> {
   constexpr R operator()(T const &obj) const {
     return obj.*fn;
   }
