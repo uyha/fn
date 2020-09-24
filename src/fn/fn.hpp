@@ -35,7 +35,7 @@
 #endif
 #endif
 
-namespace fn {
+namespace river {
 namespace detail {
 template <typename T>
 struct remove_reference {
@@ -188,4 +188,4 @@ struct FnImpl<decltype(fn), fn> {
 
 template <auto fp>
 using fn = detail::FnImpl<decltype(fp), fp>;
-} // namespace fn
+} // namespace river

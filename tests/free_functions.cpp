@@ -18,20 +18,22 @@ int fn_noexcept_impl() noexcept {
 
 void fn_with_argument_impl(int) {}
 
+using namespace river;
+
 TEST_CASE("fn of free function pointers can be called with the correct arguments") {
-  CHECK(fn::fn<&fn_impl>{}() == 1);
-  CHECK(fn::fn<&fn_noexcept_impl>{}() == 1);
-  CHECK(std::is_same_v<decltype(fn::fn<&fn_with_argument_impl>{}(1)), void>);
+  CHECK(fn<&fn_impl>{}() == 1);
+  CHECK(fn<&fn_noexcept_impl>{}() == 1);
+  CHECK(std::is_same_v<decltype(fn<&fn_with_argument_impl>{}(1)), void>);
 }
 
 #if FN_PROPAGATE_NOEXCEPT
 TEST_CASE("noexcept should be propagated correctly") {
-  CHECK_FALSE(noexcept(fn::fn<&fn_impl>{}()));
-  CHECK(noexcept(fn::fn<&fn_noexcept_impl>{}()));
-  CHECK_FALSE(noexcept(fn::fn<&fn_with_argument_impl>{}(1)));
+  CHECK_FALSE(noexcept(fn<&fn_impl>{}()));
+  CHECK(noexcept(fn<&fn_noexcept_impl>{}()));
+  CHECK_FALSE(noexcept(fn<&fn_with_argument_impl>{}(1)));
 }
 #endif
 
 TEST_CASE("fn of two different function pointers are different types") {
-  CHECK_FALSE(std::is_same_v<fn::fn<&fn_impl>, fn::fn<&diff_fn_impl>>);
+  CHECK_FALSE(std::is_same_v<fn<&fn_impl>, fn<&diff_fn_impl>>);
 }

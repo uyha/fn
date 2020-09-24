@@ -28,13 +28,14 @@ struct SM {
 
   auto operator()() {
     using namespace boost::sml;
+    using namespace river;
 
-    auto const action1 = fn::fn<&action1_impl>{};
-    auto const action2 = fn::fn<&action2_impl>{};
-    auto const action3 = fn::fn<&SM::action3_impl>{};
-    auto const action4 = fn::fn<&SM::action4_impl>{};
-    auto const action5 = fn::fn<&SM::action5_impl>{};
-    auto const action6 = fn::fn<&SM::action6_impl>{};
+    auto const action1 = fn<&action1_impl>{};
+    auto const action2 = fn<&action2_impl>{};
+    auto const action3 = fn<&SM::action3_impl>{};
+    auto const action4 = fn<&SM::action4_impl>{};
+    auto const action5 = fn<&SM::action5_impl>{};
+    auto const action6 = fn<&SM::action6_impl>{};
 
     return make_transition_table(*state<s1> + event<next> / action1 = state<s2>,
                                  state<s2> + event<next> / action2  = state<s3>,
