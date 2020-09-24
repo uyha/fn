@@ -75,19 +75,19 @@ struct FnImpl;
 // region Free functions
 template <typename R, typename... Args, R (*fn)(Args...)>
 struct FnImpl<decltype(fn), fn> {
-  constexpr R operator()(Args &&... args) const {
-    return fn(forward<Args>(args)...);
+  constexpr R operator()(Args... args) const {
+    return fn(river::detail::forward<Args>(args)...);
   }
 };
 template <typename R, typename... Args, R (*fn)(Args...) noexcept>
 struct FnImpl<decltype(fn), fn> {
 #if FN_PROPAGATE_NOEXCEPT
-  constexpr R operator()(Args &&... args) const noexcept {
-    return fn(forward<Args>(args)...);
+  constexpr R operator()(Args... args) const noexcept {
+    return fn(river::detail::forward<Args>(args)...);
   }
 #else
-  constexpr R operator()(Args &&... args) const {
-    return fn(forward<Args>(args)...);
+  constexpr R operator()(Args... args) const {
+    return fn(river::detail::forward<Args>(args)...);
   }
 #endif
 };
@@ -96,40 +96,40 @@ struct FnImpl<decltype(fn), fn> {
 // region Member functions
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...)>
 struct FnImpl<decltype(fn), fn> {
-  constexpr R operator()(T &obj, Args &&... args) const {
-    return (obj.*fn)(forward<Args>(args)...);
+  constexpr R operator()(T &obj, Args... args) const {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 #if FN_ENABLE_OVERLOAD
-  constexpr R operator()(T &&obj, Args &&... args) const {
-    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  constexpr R operator()(T &&obj, Args... args) const {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 #endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const>
 struct FnImpl<decltype(fn), fn> {
-  constexpr R operator()(T const &obj, Args &&... args) const {
-    return (obj.*fn)(forward<Args>(args)...);
+  constexpr R operator()(T const &obj, Args... args) const {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) noexcept>
 struct FnImpl<decltype(fn), fn> {
 #if FN_PROPAGATE_NOEXCEPT
-  constexpr R operator()(T &obj, Args &&... args) const noexcept {
-    return (obj.*fn)(forward<Args>(args)...);
+  constexpr R operator()(T &obj, Args... args) const noexcept {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 #else
-  constexpr R operator()(T &obj, Args &&... args) const {
-    return (obj.*fn)(forward<Args>(args)...);
+  constexpr R operator()(T &obj, Args... args) const {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 #endif
 #if FN_ENABLE_OVERLOAD
 #if FN_PROPAGATE_NOEXCEPT
-  constexpr R operator()(T &&obj, Args &&... args) const noexcept {
-    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  constexpr R operator()(T &&obj, Args... args) const noexcept {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 #else
-  constexpr R operator()(T &&obj, Args &&... args) const {
-    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  constexpr R operator()(T &&obj, Args... args) const {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 #endif
 #endif
@@ -137,48 +137,48 @@ struct FnImpl<decltype(fn), fn> {
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const noexcept>
 struct FnImpl<decltype(fn), fn> {
 #if FN_PROPAGATE_NOEXCEPT
-  constexpr R operator()(T const &obj, Args &&... args) const noexcept {
-    return (obj.*fn)(forward<Args>(args)...);
+  constexpr R operator()(T const &obj, Args... args) const noexcept {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 #else
-  constexpr R operator()(T const &obj, Args &&... args) const {
-    return (obj.*fn)(forward<Args>(args)...);
+  constexpr R operator()(T const &obj, Args... args) const {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 #endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&>
 struct FnImpl<decltype(fn), fn> {
-  constexpr R operator()(T &&obj, Args &&... args) const {
-    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  constexpr R operator()(T &&obj, Args... args) const {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &&>
 struct FnImpl<decltype(fn), fn> {
-  constexpr R operator()(T const &&obj, Args &&... args) const {
-    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  constexpr R operator()(T const &&obj, Args... args) const {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&noexcept>
 struct FnImpl<decltype(fn), fn> {
 #if FN_PROPAGATE_NOEXCEPT
-  constexpr R operator()(T &&obj, Args &&... args) const noexcept {
-    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  constexpr R operator()(T &&obj, Args... args) const noexcept {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 #else
-  constexpr R operator()(T &&obj, Args &&... args) const {
-    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  constexpr R operator()(T &&obj, Args... args) const {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 #endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &&noexcept>
 struct FnImpl<decltype(fn), fn> {
 #if FN_PROPAGATE_NOEXCEPT
-  constexpr R operator()(T const &&obj, Args &&... args) const noexcept {
-    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  constexpr R operator()(T const &&obj, Args... args) const noexcept {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 #else
-  constexpr R operator()(T const &&obj, Args &&... args) const {
-    return (forward<decltype(obj)>(obj).*fn)(forward<Args>(args)...);
+  constexpr R operator()(T const &&obj, Args... args) const {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 #endif
 };
