@@ -4,6 +4,9 @@
 // sml dependency injection doesn't support overload, hence overload is disabled
 // to integrate with sml
 #define FN_ENABLE_OVERLOAD 0
+#if defined(_MSC_VER)
+#define FN_NO_PROPAGATE_NOEXCEPT 1
+#endif
 
 #include <catch2/catch.hpp>
 #include <fn/fn.hpp>

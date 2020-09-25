@@ -27,6 +27,12 @@
 #define FN_ENABLE_OVERLOAD 1
 #endif
 
+#if FN_NO_PROPAGATE_NOEXCEPT
+#define FN_NOEXCEPT
+#else
+#define FN_NOEXCEPT noexcept
+#endif
+
 namespace river {
 namespace detail {
 template <typename T>
@@ -185,7 +191,7 @@ struct FnImpl<R (*)(Args...), fn> {
 };
 template <typename R, typename... Args, R (*fn)(Args...) noexcept>
 struct FnImpl<R (*)(Args...) noexcept, fn> {
-  constexpr R operator()(Args... args) const noexcept {
+  constexpr R operator()(Args... args) const FN_NOEXCEPT {
     return fn(river::detail::forward<Args>(args)...);
   }
 };
@@ -284,39 +290,39 @@ struct FnImpl<R (T::*)(Args...) const volatile &&, fn> {
 
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) noexcept>
 struct FnImpl<R (T::*)(Args...) noexcept, fn> {
-  constexpr R operator()(T &obj, Args... args) const noexcept {
+  constexpr R operator()(T &obj, Args... args) const FN_NOEXCEPT {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 #if FN_ENABLE_OVERLOAD
-  constexpr R operator()(T &&obj, Args... args) const noexcept {
+  constexpr R operator()(T &&obj, Args... args) const FN_NOEXCEPT {
     return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 #endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const noexcept>
 struct FnImpl<R (T::*)(Args...) const noexcept, fn> {
-  constexpr R operator()(T const &obj, Args... args) const noexcept {
+  constexpr R operator()(T const &obj, Args... args) const FN_NOEXCEPT {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile noexcept>
 struct FnImpl<R (T::*)(Args...) volatile noexcept, fn> {
-  constexpr R operator()(T volatile &obj, Args... args) const noexcept {
+  constexpr R operator()(T volatile &obj, Args... args) const FN_NOEXCEPT {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 #if FN_ENABLE_OVERLOAD
-  constexpr R operator()(T volatile &&obj, Args... args) const noexcept {
+  constexpr R operator()(T volatile &&obj, Args... args) const FN_NOEXCEPT {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 #endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile noexcept>
 struct FnImpl<R (T::*)(Args...) const volatile noexcept, fn> {
-  constexpr R operator()(T const volatile &obj, Args... args) const noexcept {
+  constexpr R operator()(T const volatile &obj, Args... args) const FN_NOEXCEPT {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 #if FN_ENABLE_OVERLOAD
-  constexpr R operator()(T const volatile &&obj, Args... args) const noexcept {
+  constexpr R operator()(T const volatile &&obj, Args... args) const FN_NOEXCEPT {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 #endif
@@ -324,50 +330,50 @@ struct FnImpl<R (T::*)(Args...) const volatile noexcept, fn> {
 
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &noexcept>
 struct FnImpl<R (T::*)(Args...) &noexcept, fn> {
-  constexpr R operator()(T &obj, Args... args) const noexcept {
+  constexpr R operator()(T &obj, Args... args) const FN_NOEXCEPT {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &noexcept>
 struct FnImpl<R (T::*)(Args...) const &noexcept, fn> {
-  constexpr R operator()(T const &obj, Args... args) const noexcept {
+  constexpr R operator()(T const &obj, Args... args) const FN_NOEXCEPT {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile &noexcept>
 struct FnImpl<R (T::*)(Args...) volatile &noexcept, fn> {
-  constexpr R operator()(T volatile &obj, Args... args) const noexcept {
+  constexpr R operator()(T volatile &obj, Args... args) const FN_NOEXCEPT {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile &noexcept>
 struct FnImpl<R (T::*)(Args...) const volatile &noexcept, fn> {
-  constexpr R operator()(T const volatile &obj, Args... args) const noexcept {
+  constexpr R operator()(T const volatile &obj, Args... args) const FN_NOEXCEPT {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 };
 
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&noexcept>
 struct FnImpl<R (T::*)(Args...) &&noexcept, fn> {
-  constexpr R operator()(T &&obj, Args... args) const noexcept {
+  constexpr R operator()(T &&obj, Args... args) const FN_NOEXCEPT {
     return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &&noexcept>
 struct FnImpl<R (T::*)(Args...) const &&noexcept, fn> {
-  constexpr R operator()(T const &&obj, Args... args) const noexcept {
+  constexpr R operator()(T const &&obj, Args... args) const FN_NOEXCEPT {
     return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile &&noexcept>
 struct FnImpl<R (T::*)(Args...) volatile &&noexcept, fn> {
-  constexpr R operator()(T volatile &&obj, Args... args) const noexcept {
+  constexpr R operator()(T volatile &&obj, Args... args) const FN_NOEXCEPT {
     return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile &&noexcept>
 struct FnImpl<R (T::*)(Args...) const volatile &&noexcept, fn> {
-  constexpr R operator()(T const volatile &&obj, Args... args) const noexcept {
+  constexpr R operator()(T const volatile &&obj, Args... args) const FN_NOEXCEPT {
     return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 };
