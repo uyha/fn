@@ -27,14 +27,6 @@
 #define FN_ENABLE_OVERLOAD 1
 #endif
 
-#ifndef FN_PROPAGATE_NOEXCEPT
-#ifdef _MSC_VER
-#define FN_PROPAGATE_NOEXCEPT 0
-#else
-#define FN_PROPAGATE_NOEXCEPT 1
-#endif
-#endif
-
 namespace river {
 namespace detail {
 template <typename T>
@@ -193,15 +185,9 @@ struct FnImpl<R (*)(Args...), fn> {
 };
 template <typename R, typename... Args, R (*fn)(Args...) noexcept>
 struct FnImpl<R (*)(Args...) noexcept, fn> {
-#if FN_PROPAGATE_NOEXCEPT
   constexpr R operator()(Args... args) const noexcept {
     return fn(river::detail::forward<Args>(args)...);
   }
-#else
-  constexpr R operator()(Args... args) const {
-    return fn(river::detail::forward<Args>(args)...);
-  }
-#endif
 };
 // endregion
 
@@ -223,6 +209,54 @@ struct FnImpl<R (T::*)(Args...) const, fn> {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 };
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile>
+struct FnImpl<R (T::*)(Args...) volatile, fn> {
+  constexpr R operator()(T volatile &obj, Args... args) const {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+#if FN_ENABLE_OVERLOAD
+  constexpr R operator()(T volatile &&obj, Args... args) const {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+#endif
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile>
+struct FnImpl<R (T::*)(Args...) const volatile, fn> {
+  constexpr R operator()(T const volatile &obj, Args... args) const {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+#if FN_ENABLE_OVERLOAD
+  constexpr R operator()(T const volatile &&obj, Args... args) const {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+#endif
+};
+
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &>
+struct FnImpl<R (T::*)(Args...) &, fn> {
+  constexpr R operator()(T &obj, Args... args) const {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &>
+struct FnImpl<R (T::*)(Args...) const &, fn> {
+  constexpr R operator()(T const &obj, Args... args) const {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile &>
+struct FnImpl<R (T::*)(Args...) volatile &, fn> {
+  constexpr R operator()(T volatile &obj, Args... args) const {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile &>
+struct FnImpl<R (T::*)(Args...) const volatile &, fn> {
+  constexpr R operator()(T const volatile &obj, Args... args) const {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+};
+
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&>
 struct FnImpl<R (T::*)(Args...) &&, fn> {
   constexpr R operator()(T &&obj, Args... args) const {
@@ -235,64 +269,107 @@ struct FnImpl<R (T::*)(Args...) const &&, fn> {
     return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
 };
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile &&>
+struct FnImpl<R (T::*)(Args...) volatile &&, fn> {
+  constexpr R operator()(T volatile &&obj, Args... args) const {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile &&>
+struct FnImpl<R (T::*)(Args...) const volatile &&, fn> {
+  constexpr R operator()(T const volatile &&obj, Args... args) const {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
+  }
+};
+
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) noexcept>
 struct FnImpl<R (T::*)(Args...) noexcept, fn> {
-#if FN_PROPAGATE_NOEXCEPT
   constexpr R operator()(T &obj, Args... args) const noexcept {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
-#else
-  constexpr R operator()(T &obj, Args... args) const {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-#endif
 #if FN_ENABLE_OVERLOAD
-#if FN_PROPAGATE_NOEXCEPT
   constexpr R operator()(T &&obj, Args... args) const noexcept {
     return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
-#else
-  constexpr R operator()(T &&obj, Args... args) const {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-#endif
 #endif
 };
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const noexcept>
 struct FnImpl<R (T::*)(Args...) const noexcept, fn> {
-#if FN_PROPAGATE_NOEXCEPT
   constexpr R operator()(T const &obj, Args... args) const noexcept {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
-#else
-  constexpr R operator()(T const &obj, Args... args) const {
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile noexcept>
+struct FnImpl<R (T::*)(Args...) volatile noexcept, fn> {
+  constexpr R operator()(T volatile &obj, Args... args) const noexcept {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+#if FN_ENABLE_OVERLOAD
+  constexpr R operator()(T volatile &&obj, Args... args) const noexcept {
     return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 #endif
 };
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&noexcept>
-struct FnImpl<R (T::*)(Args...) &&noexcept, fn> {
-#if FN_PROPAGATE_NOEXCEPT
-  constexpr R operator()(T &&obj, Args... args) const noexcept {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile noexcept>
+struct FnImpl<R (T::*)(Args...) const volatile noexcept, fn> {
+  constexpr R operator()(T const volatile &obj, Args... args) const noexcept {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
-#else
-  constexpr R operator()(T &&obj, Args... args) const {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
+#if FN_ENABLE_OVERLOAD
+  constexpr R operator()(T const volatile &&obj, Args... args) const noexcept {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
   }
 #endif
 };
+
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &noexcept>
+struct FnImpl<R (T::*)(Args...) &noexcept, fn> {
+  constexpr R operator()(T &obj, Args... args) const noexcept {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &noexcept>
+struct FnImpl<R (T::*)(Args...) const &noexcept, fn> {
+  constexpr R operator()(T const &obj, Args... args) const noexcept {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile &noexcept>
+struct FnImpl<R (T::*)(Args...) volatile &noexcept, fn> {
+  constexpr R operator()(T volatile &obj, Args... args) const noexcept {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile &noexcept>
+struct FnImpl<R (T::*)(Args...) const volatile &noexcept, fn> {
+  constexpr R operator()(T const volatile &obj, Args... args) const noexcept {
+    return (obj.*fn)(river::detail::forward<Args>(args)...);
+  }
+};
+
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&noexcept>
+struct FnImpl<R (T::*)(Args...) &&noexcept, fn> {
+  constexpr R operator()(T &&obj, Args... args) const noexcept {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
+  }
+};
 template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &&noexcept>
-struct FnImpl<decltype(fn), fn> {
-#if FN_PROPAGATE_NOEXCEPT
+struct FnImpl<R (T::*)(Args...) const &&noexcept, fn> {
   constexpr R operator()(T const &&obj, Args... args) const noexcept {
     return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
-#else
-  constexpr R operator()(T const &&obj, Args... args) const {
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile &&noexcept>
+struct FnImpl<R (T::*)(Args...) volatile &&noexcept, fn> {
+  constexpr R operator()(T volatile &&obj, Args... args) const noexcept {
     return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
   }
-#endif
+};
+template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile &&noexcept>
+struct FnImpl<R (T::*)(Args...) const volatile &&noexcept, fn> {
+  constexpr R operator()(T const volatile &&obj, Args... args) const noexcept {
+    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
+  }
 };
 
 #if __cpp_concepts >= 201907
@@ -301,6 +378,11 @@ requires(!is_member_function_pointer_v<R(T::*)>) struct FnImpl<R(T::*), fn> {
   constexpr R operator()(T const &obj) const {
     return obj.*fn;
   }
+#if FN_ENABLE_OVERLOAD
+  constexpr R operator()(T const volatile &obj) const {
+    return obj.*fn;
+  }
+#endif
 };
 #else
 template <typename R, typename T, R(T::*fn)>
@@ -308,6 +390,14 @@ struct FnImpl<enable_if_t<!is_member_function_pointer_v<R(T::*)>, R(T::*)>, fn> 
   constexpr R operator()(T const &obj) const {
     return obj.*fn;
   }
+#if FN_ENABLE_OVERLOAD
+  constexpr R operator()(T const volatile &obj) const {
+    return obj.*fn;
+  }
+  constexpr R operator()(T const volatile &&obj) const {
+    return obj.*fn;
+  }
+#endif
 };
 #endif
 // endregion
