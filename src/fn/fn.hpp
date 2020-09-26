@@ -23,6 +23,8 @@
 // DEALINGS IN THE SOFTWARE.
 
 #pragma once
+#include <type_traits>
+
 #ifndef FN_ENABLE_OVERLOAD
 #define FN_ENABLE_OVERLOAD 1
 #endif
@@ -36,146 +38,12 @@
 namespace river {
 namespace detail {
 template <typename T>
-struct remove_reference {
-  using type = T;
-};
-template <typename T>
-struct remove_reference<T &> {
-  using type = T;
-};
-template <typename T>
-struct remove_reference<T &&> {
-  using type = T;
-};
-
-template <typename T>
-struct is_lvalue_reference {
-  static constexpr bool value = false;
-};
-template <typename T>
-struct is_lvalue_reference<T &> {
-  static constexpr bool value = true;
-};
-
-template <typename T>
-struct is_member_function_pointer {
-  static constexpr bool value = false;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...)> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) const> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) volatile> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) const volatile> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) &> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) const &> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) volatile &> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) const volatile &> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) &&> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) const &&> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) volatile &&> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) const volatile &&> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) noexcept> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) const noexcept> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) volatile noexcept> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) const volatile noexcept> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) &noexcept> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) const &noexcept> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) volatile &noexcept> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) const volatile &noexcept> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) &&noexcept> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) const &&noexcept> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) volatile &&noexcept> {
-  static constexpr bool value = true;
-};
-template <typename R, typename T, typename... Args>
-struct is_member_function_pointer<R (T::*)(Args...) const volatile &&noexcept> {
-  static constexpr bool value = true;
-};
-template <typename T>
-constexpr bool is_member_function_pointer_v = is_member_function_pointer<T>::value;
-
-template <bool, typename T = void>
-struct enable_if;
-template <typename T>
-struct enable_if<true, T> {
-  using type = T;
-};
-template <bool cond, typename T = void>
-using enable_if_t = typename enable_if<cond, T>::type;
-
-template <typename T>
-constexpr T &&forward(typename remove_reference<T>::type &t) noexcept {
+constexpr T &&forward(typename std::remove_reference<T>::type &t) noexcept {
   return static_cast<T &&>(t);
 }
 template <typename T>
-constexpr T &&forward(typename remove_reference<T>::type &&t) noexcept {
-  static_assert(!is_lvalue_reference<T>::value);
+constexpr T &&forward(typename std::remove_reference<T>::type &&t) noexcept {
+  static_assert(!std::is_lvalue_reference_v<T>);
   return static_cast<T &&>(t);
 }
 
@@ -378,21 +246,8 @@ struct FnImpl<R (T::*)(Args...) const volatile &&noexcept, fn> {
   }
 };
 
-#if __cpp_concepts >= 201907
 template <typename R, typename T, R(T::*fn)>
-requires(!is_member_function_pointer_v<R(T::*)>) struct FnImpl<R(T::*), fn> {
-  constexpr R operator()(T const &obj) const {
-    return obj.*fn;
-  }
-#if FN_ENABLE_OVERLOAD
-  constexpr R operator()(T const volatile &obj) const {
-    return obj.*fn;
-  }
-#endif
-};
-#else
-template <typename R, typename T, R(T::*fn)>
-struct FnImpl<enable_if_t<!is_member_function_pointer_v<R(T::*)>, R(T::*)>, fn> {
+struct FnImpl<std::enable_if_t<!std::is_member_function_pointer_v<R(T::*)>, R(T::*)>, fn> {
   constexpr R operator()(T const &obj) const {
     return obj.*fn;
   }
@@ -405,7 +260,6 @@ struct FnImpl<enable_if_t<!is_member_function_pointer_v<R(T::*)>, R(T::*)>, fn> 
   }
 #endif
 };
-#endif
 // endregion
 
 } // namespace detail
