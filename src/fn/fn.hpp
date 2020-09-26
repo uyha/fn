@@ -36,6 +36,48 @@
 #endif
 
 namespace river {
+template <typename T>
+struct type_identity {
+  using type = T;
+};
+
+template <typename T>
+struct remove_noexcept : type_identity<T> {};
+template <typename R, typename... Args>
+struct remove_noexcept<R(Args...) noexcept> : type_identity<R(Args...)> {};
+template <typename R, typename... Args>
+struct remove_noexcept<R (*)(Args...) noexcept> : type_identity<R (*)(Args...)> {};
+template <typename R, typename T, typename... Args>
+struct remove_noexcept<R (T::*)(Args...) noexcept> : type_identity<R (T::*)(Args...)> {};
+template <typename R, typename T, typename... Args>
+struct remove_noexcept<R (T::*)(Args...) const noexcept>
+    : type_identity<R (T::*)(Args...) const> {};
+template <typename R, typename T, typename... Args>
+struct remove_noexcept<R (T::*)(Args...) volatile noexcept>
+    : type_identity<R (T::*)(Args...) volatile> {};
+template <typename R, typename T, typename... Args>
+struct remove_noexcept<R (T::*)(Args...) const volatile noexcept>
+    : type_identity<R (T::*)(Args...) const volatile> {};
+template <typename T>
+using remove_noexcept_t = typename remove_noexcept<T>::type;
+
+template <typename T>
+struct is_noexcept : std::bool_constant<!std::is_same_v<remove_noexcept_t<T>, T>> {};
+template <typename T>
+constexpr auto is_noexcept_v = is_noexcept<T>::value;
+
+template <typename T>
+struct remove_const : type_identity<T> {};
+template <typename T>
+using remove_const_t = typename remove_const<T>::type;
+
+template <typename T>
+struct is_const_member_function : std::false_type {};
+template <typename R, typename T, typename... Args>
+struct is_const_member_function<R (T::*)(Args...) const> : std::true_type {};
+template <typename T>
+constexpr auto is_const_member_function_v = is_const_member_function<T>::value;
+
 namespace detail {
 template <typename T>
 constexpr T &&forward(typename std::remove_reference<T>::type &t) noexcept {
