@@ -1,4 +1,4 @@
-# A template for C++ projects
+# Function pointers as lambda
 ![C/C++ CI](https://github.com/uyha/fn/workflows/C/C++%20CI/badge.svg)
 
 This library provides a thin wrapper that turns (member) function pointers into individual types. It is intended make 
