@@ -1,0 +1,50 @@
+name: C/C++ CI
+on:
+  push:
+    branches: [ master ]
+jobs:
+  ubuntu:
+    name: Ubuntu
+    strategy:
+      matrix:
+        cpp_standard: [ 20 ]
+        cpp_compiler: [ g++-9, clang++-9 ]
+        os: [ ubuntu-20.04 ]
+    runs-on: ${{matrix.os}}
+    steps:
+      - uses: actions/checkout@v2
+      - name: install venv
+        run: sudo apt-get install python3-venv
+      - name: install poetry
+        run: curl -sSL https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py | python
+      - name: CMake configuration
+        run: >
+          cmake -B build $GITHUB_WORKSPACE
+          -DCMAKE_BUILD_TYPE=RELEASE -DPoetry_DIR=$HOME/.poetry/bin
+          -DCMAKE_CXX_STANDARD=${{matrix.cpp_standard}} -DCMAKE_CXX_COMPILER=${{matrix.cpp_compiler}}
+      - name: Build
+        run: cmake --build build --config release
+      - name: Run tests
+        run: ctest
+        working-directory: build/tests
+
+  windows:
+    name: Windows
+    strategy:
+      matrix:
+        cpp_standard: [ 20 ]
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v2
+      - name: install poetry
+        run: (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python
+      - name: CMake configuration
+        run: >
+          cmake -B build $env:GITHUB_WORKSPACE
+          -DPoetry_DIR="$env:USERPROFILE\.poetry"
+          -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_CXX_STANDARD=${{matrix.cpp_standard}}
+      - name: Build
+        run: cmake --build build --config release
+      - name: Run tests
+        run: ctest -C release
+        working-directory: build/tests
