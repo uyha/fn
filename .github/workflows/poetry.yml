@@ -7,8 +7,8 @@ jobs:
     name: Ubuntu
     strategy:
       matrix:
-        cpp_standard: [ 20 ]
-        cpp_compiler: [ g++-9, clang++-9 ]
+        cpp_standard: [ 17, 20 ]
+        cpp_compiler: [ g++-8, g++-9, clang++-8, clang++-9 ]
         os: [ ubuntu-20.04 ]
     runs-on: ${{matrix.os}}
     steps:
@@ -32,7 +32,7 @@ jobs:
     name: Windows
     strategy:
       matrix:
-        cpp_standard: [ 20 ]
+        cpp_standard: [ 17, 20 ]
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
