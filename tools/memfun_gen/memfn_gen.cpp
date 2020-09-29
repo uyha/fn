@@ -4,32 +4,12 @@
 #include "mem_fn_sig.hpp"
 
 #include <cxxopts.hpp>
-#include <range/v3/view/cartesian_product.hpp>
-#include <range/v3/view/transform.hpp>
-
-auto gen_memfn(std::vector<bool> const &consts,
-               std::vector<bool> const &volatiles,
-               std::vector<RefQualifier> const &refs,
-               std::vector<bool> const &noexcepts) {
-  using namespace ranges;
-  return views::cartesian_product(refs, noexcepts, volatiles, consts)
-       | views::transform([](auto config) {
-           auto const &[ref, is_noexcept, is_volatile, is_const] = config;
-           return MemFn{.is_const      = is_const,
-                        .is_volatile   = is_volatile,
-                        .ref_qualifier = ref,
-                        .is_noexcept   = is_noexcept};
-         });
-}
 
 int main(int argc, char **argv) {
   using namespace cxxopts;
 
-  auto consts          = std::vector<bool>{};
-  auto volatiles       = std::vector<bool>{};
-  auto refs            = std::vector<RefQualifier>{};
-  auto noexcepts       = std::vector<bool>{};
   auto format          = std::string{};
+  auto config          = Config{};
   auto type_formatter  = TypeFormatter{};
   auto alias_formatter = AliasFormatter{};
 
@@ -38,10 +18,10 @@ int main(int argc, char **argv) {
   // clang-format off
   options.add_options()
       ("f,format", "the format to be printed out following fmt syntax, 2 named arguments are `alias` and `type`", value(format))
-      ("c,const", "const qualifiers of the member function", value(consts)->default_value("false,true"))
-      ("v,volatile", "volatile qualifiers of the member function", value(volatiles)->default_value("false,true"))
-      ("r,ref", "reference qualifiers of the member function", value(refs)->default_value("empty,lvalue,rvalue"))
-      ("n,noexcept", "noexcept qualifiers of the member function", value(noexcepts)->default_value("false,true"))
+      ("c,const", "const qualifiers of the member function", value(config.consts)->default_value("false,true"))
+      ("v,volatile", "volatile qualifiers of the member function", value(config.volatiles)->default_value("false,true"))
+      ("r,ref", "reference qualifiers of the member function", value(config.refs)->default_value("empty,lvalue,rvalue"))
+      ("n,noexcept", "noexcept qualifiers of the member function", value(config.noexcepts)->default_value("false,true"))
       ("return_type", "the return type of the function type", value(type_formatter.rtn_type)->default_value("R"))
       ("class_type", "the class type of the function type", value(type_formatter.cls_type)->default_value("T"))
       ("arg_type", "the argument type of the function type", value(type_formatter.arg_type)->default_value("Args..."))
@@ -65,7 +45,7 @@ int main(int argc, char **argv) {
     return 0;
   }
 
-  for (auto const &memfn : gen_memfn(consts, volatiles, refs, noexcepts)) {
+  for (auto const &memfn : config.generate()) {
     fmt::print(format,
                fmt::arg("alias", memfn.alias(alias_formatter)),
                fmt::arg("type", memfn.type(type_formatter)));

@@ -7,6 +7,7 @@
 #include <fmt/compile.h>
 #include <istream>
 #include <map>
+#include <range/v3/view/cartesian_product.hpp>
 
 enum class RefQualifier { empty, lvalue, rvalue };
 std::istream &operator>>(std::istream &is, RefQualifier &ref) {
@@ -98,5 +99,25 @@ struct MemFn {
 
     return fmt::format(
         FMT_COMPILE("{}{}{}{}"), ref_prefix, noexcept_prefix, cv_prefix, formatter.name);
+  }
+};
+
+struct Config {
+  std::vector<bool> consts;
+  std::vector<bool> volatiles;
+  std::vector<RefQualifier> refs;
+  std::vector<bool> noexcepts;
+
+  [[nodiscard]] auto generate() const -> std::vector<MemFn> {
+    using namespace ranges;
+    auto member_functions = std::vector<MemFn>{};
+    for (auto const &[ref, is_noexcept, is_volatile, is_const] :
+         views::cartesian_product(refs, noexcepts, volatiles, consts)) {
+      member_functions.push_back(MemFn{.is_const      = is_const,
+                                       .is_volatile   = is_volatile,
+                                       .ref_qualifier = ref,
+                                       .is_noexcept   = is_noexcept});
+    }
+    return member_functions;
   }
 };
