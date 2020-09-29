@@ -116,11 +116,9 @@ template <typename T>
 using remove_const_t = typename remove_const<T>::type;
 
 template <typename T>
-struct is_const_member_function : std::false_type {};
-template <typename R, typename T, typename... Args>
-struct is_const_member_function<R (T::*)(Args...) const> : std::true_type {};
+struct is_const : std::bool_constant<!std::is_same_v<remove_const_t<T>, T>> {};
 template <typename T>
-constexpr auto is_const_member_function_v = is_const_member_function<T>::value;
+constexpr auto is_const_v = is_const<T>::value;
 
 namespace detail {
 template <typename T>
@@ -133,7 +131,7 @@ constexpr T &&forward(typename std::remove_reference<T>::type &&t) noexcept {
   return static_cast<T &&>(t);
 }
 
-template <typename T, auto>
+template <typename T, typename type_identity<T>::type>
 struct FnImpl;
 
 // region Free functions
