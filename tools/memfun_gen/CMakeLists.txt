@@ -1,3 +1,5 @@
+include(dependencies)
+
 find_package(range-v3 REQUIRED)
 find_package(cxxopts REQUIRED)
 find_package(fmt REQUIRED)
