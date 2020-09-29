@@ -45,9 +45,9 @@ function(find_conan_via_poetry)
     endif ()
 
     message(DEBUG "Generating poetry environment")
-    if (${CMAKE_SOURCE_DIR}/pyproject.toml IS_NEWER_THAN ${CMAKE_BINARY_DIR}/poetry.lock)
-        file(COPY ${CMAKE_SOURCE_DIR}/pyproject.toml DESTINATION ${CMAKE_BINARY_DIR})
-        if (EXISTS ${CMAKE_BINARY_DIR}/poetry.lock)
+    if (${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml IS_NEWER_THAN ${CMAKE_CURRENT_BINARY_DIR}/poetry.lock)
+        file(COPY ${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+        if (EXISTS ${CMAKE_CURRENT_BINARY_DIR}/poetry.lock)
             poetry_update()
         else ()
             poetry_install()
@@ -78,24 +78,24 @@ function(find_conan)
     endif ()
 
     # Finding conan by creating the pipenv environment specified in the project's root
-    if (NOT EXISTS ${CMAKE_SOURCE_DIR}/Pipfile)
+    if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/Pipfile)
         message(DEBUG "No pipfile in the project's root, skipping pipenv")
     else ()
         find_conan_via_pipenv()
         if (CONAN_FOUND)
-            watch(${CMAKE_SOURCE_DIR}/Pipfile)
+            watch(${CMAKE_CURRENT_SOURCE_DIR}/Pipfile)
             return()
         endif ()
     endif ()
 
     # Finding conan by creating the poetry environment specified in the project's root
-    if (NOT EXISTS ${CMAKE_SOURCE_DIR}/pyproject.toml)
+    if (NOT EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml)
         message(DEBUG "No pyproject.toml in the project's root, skipping poetry")
     else ()
         find_conan_via_poetry()
 
         if (CONAN_FOUND)
-            watch(${CMAKE_SOURCE_DIR}/pyproject.toml)
+            watch(${CMAKE_CURRENT_SOURCE_DIR}/pyproject.toml)
             return()
         endif ()
     endif ()
@@ -107,8 +107,7 @@ function(find_conan)
     )
 endfunction()
 
-
-if (${CMAKE_SOURCE_DIR}/conanfile.txt IS_NEWER_THAN ${CMAKE_BINARY_DIR}/conan.lock)
+if (${CMAKE_CURRENT_SOURCE_DIR}/conanfile.txt IS_NEWER_THAN ${CMAKE_CURRENT_BINARY_DIR}/conan.lock)
     find_conan()
     if (NOT CONAN_FOUND)
         message(WARNING "Aborting conan configuration, conan is not found, please make sure it is installed")
@@ -120,20 +119,19 @@ if (${CMAKE_SOURCE_DIR}/conanfile.txt IS_NEWER_THAN ${CMAKE_BINARY_DIR}/conan.lo
         set(CMAKE_BUILD_TYPE Debug)
     endif ()
 
-    if (NOT EXISTS ${CMAKE_BINARY_DIR}/conan.cmake)
+    if (NOT EXISTS ${CMAKE_CURRENT_BINARY_DIR}/conan.cmake)
         message(STATUS "Downloading conan.cmake")
         file(DOWNLOAD "https://github.com/conan-io/cmake-conan/raw/v0.15/conan.cmake"
-                "${CMAKE_BINARY_DIR}/conan.cmake")
+                "${CMAKE_CURRENT_BINARY_DIR}/conan.cmake")
     endif ()
-    include(${CMAKE_BINARY_DIR}/conan.cmake)
+    include(${CMAKE_CURRENT_BINARY_DIR}/conan.cmake)
 
     conan_cmake_run(
             CONANFILE conanfile.txt
             BUILD missing
     )
-    watch(${CMAKE_SOURCE_DIR}/conanfile.txt)
 endif ()
-
-set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_BINARY_DIR})
+watch(${CMAKE_CURRENT_SOURCE_DIR}/conanfile.txt)
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_BINARY_DIR})
 set(CONAN_CMAKE_SILENT_OUTPUT TRUE)
 
