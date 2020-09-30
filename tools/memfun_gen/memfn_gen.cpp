@@ -9,7 +9,8 @@ int main(int argc, char **argv) {
   using namespace cxxopts;
 
   auto format             = std::string{};
-  auto configs            = std::vector<Config>{};
+  auto config             = Config{};
+  auto masks              = std::vector<MemFnMask>{};
   auto variable_formatter = VariableFormatter{};
   auto alias_formatter    = AliasFormatter{};
 
@@ -17,8 +18,11 @@ int main(int argc, char **argv) {
 
   // clang-format off
   options.add_options()
-      ("f,format", "the format to be printed out following fmt syntax, 2 named arguments are `alias` and `type`", value(format))
-      ("c,config", "const volatile ref noexcept config of the member function", value(configs)->default_value("3373"))
+      ("f,format", "the format to be printed out following fmt syntax, "
+                   "3 named arguments are `alias`, `type`, and `var` "
+                   "and prefixed with `mN_` with masked functions while N is from 0 to the number of masks supplied", value(format))
+      ("c,config", "const volatile ref noexcept config of the member function", value(config)->default_value("3373"))
+      ("m,mask", "the masks for transforming the member function", value(masks))
       ("return_type", "the return type of the function type", value(variable_formatter.rtn_type)->default_value("R"))
       ("class_type", "the class type of the function type", value(variable_formatter.cls_type)->default_value("T"))
       ("name", "name of the variable", value(variable_formatter.var_name)->default_value("fn"))
@@ -46,13 +50,27 @@ int main(int argc, char **argv) {
     format += "\n";
   }
 
-  for (auto const &config : configs) {
-    for (auto const &memfn : config.generate()) {
-      fmt::print(format,
-                 fmt::arg("alias", memfn.alias(alias_formatter)),
-                 fmt::arg("var", memfn.type(variable_formatter)),
-                 fmt::arg("type", memfn.var(variable_formatter)));
+  std::vector<std::string> storage{};
+  for (auto const memfn : config.generate()) {
+    auto count       = 0;
+    auto format_args = fmt::dynamic_format_arg_store<fmt::format_context>{};
+    format_args.push_back(fmt::arg("alias", memfn.alias(alias_formatter)));
+    format_args.push_back(fmt::arg("type", memfn.type(variable_formatter)));
+    format_args.push_back(fmt::arg("var", memfn.var(variable_formatter)));
+
+    for (auto const mask : masks) {
+      format_args.push_back(
+          fmt::arg(storage.emplace_back(fmt::format(FMT_COMPILE("m{}_alias"), count)).data(),
+                   mask.mask(memfn).alias(alias_formatter)));
+      format_args.push_back(
+          fmt::arg(storage.emplace_back(fmt::format(FMT_COMPILE("m{}_type"), count)).data(),
+                   mask.mask(memfn).type(variable_formatter)));
+      format_args.push_back(
+          fmt::arg(storage.emplace_back(fmt::format(FMT_COMPILE("m{}_var"), count)).data(),
+                   mask.mask(memfn).var(variable_formatter)));
+      ++count;
     }
+    fmt::vprint(format, format_args);
   }
 
   return 0;

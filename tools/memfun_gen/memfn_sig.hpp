@@ -11,7 +11,7 @@
 #include <map>
 #include <range/v3/view/cartesian_product.hpp>
 
-enum class RefQualifier { empty, lvalue, rvalue };
+enum class RefQualifier : std::uint8_t { empty, lvalue, rvalue };
 std::istream &operator>>(std::istream &is, RefQualifier &ref) {
   std::string raw(std::istreambuf_iterator<char>{is}, {});
   if (raw == "empty")
@@ -26,6 +26,18 @@ std::istream &operator>>(std::istream &is, RefQualifier &ref) {
             "{} is not a value ref qualifier (only `empty`, `lvalue`, `rvalue` are allowed)"),
         raw)};
   return is;
+}
+auto operator|(RefQualifier lhs, RefQualifier rhs) noexcept -> RefQualifier {
+  return static_cast<RefQualifier>(
+      static_cast<std::uint8_t>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs)));
+}
+auto operator&(RefQualifier lhs, RefQualifier rhs) noexcept -> RefQualifier {
+  return static_cast<RefQualifier>(
+      static_cast<std::uint8_t>(static_cast<std::uint8_t>(lhs) & static_cast<std::uint8_t>(rhs)));
+}
+auto operator^(RefQualifier lhs, RefQualifier rhs) noexcept -> RefQualifier {
+  return static_cast<RefQualifier>(
+      static_cast<std::uint8_t>(static_cast<std::uint8_t>(lhs) ^ static_cast<std::uint8_t>(rhs)));
 }
 
 struct TypeFormatter {
@@ -130,6 +142,70 @@ struct MemFn {
                        noexcept_spec);
   }
 };
+struct MemFnMask {
+  enum Operator { or_op, and_op, xor_op };
+
+  Operator op;
+  bool const_mask{true};
+  bool volatile_mask{true};
+  RefQualifier ref_mask{RefQualifier::empty};
+  bool noexcept_mask{true};
+
+  static constexpr auto pattern = ctll::fixed_string{"([\\|&^])([01])([01])([0-2])([01])"};
+  static auto parse(std::string_view source) -> MemFnMask {
+    auto mask = MemFnMask{};
+    auto const &[whole, op, const_mask, volatile_mask, ref_mask, noexcept_mask] =
+        ctre::match<pattern>(source);
+
+    if (!whole)
+      throw std::invalid_argument(fmt::format(FMT_COMPILE("{} is not a valid mask"), source));
+
+    mask.op            = op.to_view() == "|" ? Operator::or_op
+                       : op.to_view() == "&" ? Operator::and_op
+                                             : Operator::xor_op;
+    mask.const_mask    = const_mask.to_view() == "1";
+    mask.volatile_mask = volatile_mask.to_view() == "1";
+    mask.ref_mask      = const_mask.to_view() == "0" ? RefQualifier::empty
+                       : const_mask.to_view() == "1" ? RefQualifier::lvalue
+                                                     : RefQualifier::rvalue;
+    mask.noexcept_mask = noexcept_mask.to_view() == "1";
+
+    return mask;
+  }
+  friend std::istream &operator>>(std::istream &is, MemFnMask &mask) {
+    auto raw = std::string{std::istreambuf_iterator<char>{is}, {}};
+    mask     = parse(raw);
+    return is;
+  }
+  friend MemFn operator|(MemFn const &lhs, MemFnMask const &rhs) {
+    return {lhs.is_const || rhs.const_mask,
+            lhs.is_volatile || rhs.volatile_mask,
+            lhs.ref_qualifier | rhs.ref_mask,
+            lhs.is_noexcept || rhs.noexcept_mask};
+  }
+  friend MemFn operator&(MemFn const &lhs, MemFnMask const &rhs) {
+    return {lhs.is_const && rhs.const_mask,
+            lhs.is_volatile && rhs.volatile_mask,
+            lhs.ref_qualifier & rhs.ref_mask,
+            lhs.is_noexcept && rhs.noexcept_mask};
+  }
+  friend MemFn operator^(MemFn const &lhs, MemFnMask const &rhs) {
+    return {lhs.is_const != rhs.const_mask,
+            lhs.is_volatile != rhs.volatile_mask,
+            lhs.ref_qualifier ^ rhs.ref_mask,
+            lhs.is_noexcept != rhs.noexcept_mask};
+  }
+  [[nodiscard]] auto mask(MemFn memfn) const noexcept -> MemFn {
+    switch (op) {
+    case Operator::or_op:
+      return memfn | *this;
+    case Operator::and_op:
+      return memfn & *this;
+    case Operator::xor_op:
+      return memfn ^ *this;
+    }
+  }
+};
 
 auto parse_1_3(char selection_char) -> std::vector<bool> {
   auto result = std::vector<bool>{};
@@ -154,7 +230,7 @@ auto parse_ref(char selection_char) -> std::vector<RefQualifier> {
 
   std::uint8_t selection = selection_char - '0';
 
-  if (selection < 1u || selection > 3u)
+  if (selection < 1u || selection > 7u)
     throw std::invalid_argument(
         fmt::format("{} is not a valid argument, only 1 to 7 are allowed", selection));
 
@@ -188,13 +264,16 @@ struct Config {
   }
 
   static constexpr auto pattern = ctll::fixed_string{"([1-3])([1-3])([1-7])([1-3])"};
-  static auto parse(std::string_view view) -> Config {
+  static auto parse(std::string_view source) -> Config {
     auto config                                             = Config{};
-    auto const &[whole, consts, volatiles, refs, noexcepts] = ctre::match<pattern>(view);
+    auto const &[whole, consts, volatiles, refs, noexcepts] = ctre::match<pattern>(source);
+
+    if (!whole)
+      throw std::invalid_argument(fmt::format("{} is not a config", source));
 
     config.consts    = parse_1_3(consts.to_view()[0]);
     config.volatiles = parse_1_3(volatiles.to_view()[0]);
-    config.refs      = parse_ref(consts.to_view()[0]);
+    config.refs      = parse_ref(refs.to_view()[0]);
     config.noexcepts = parse_1_3(noexcepts.to_view()[0]);
 
     return config;
