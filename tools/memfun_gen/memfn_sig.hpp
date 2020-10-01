@@ -204,6 +204,7 @@ struct MemFnMask {
     case Operator::xor_op:
       return memfn ^ *this;
     }
+    return memfn;
   }
 };
 
@@ -253,11 +254,11 @@ struct Config {
   [[nodiscard]] auto generate() const -> std::vector<MemFn> {
     using namespace ranges;
     auto member_functions = std::vector<MemFn>{};
-    for (auto const &[ref, is_noexcept, is_volatile, is_const] :
+    for (auto const &[ref_qualifier, is_noexcept, is_volatile, is_const] :
          views::cartesian_product(refs, noexcepts, volatiles, consts)) {
       member_functions.push_back(MemFn{.is_const      = is_const,
                                        .is_volatile   = is_volatile,
-                                       .ref_qualifier = ref,
+                                       .ref_qualifier = ref_qualifier,
                                        .is_noexcept   = is_noexcept});
     }
     return member_functions;
