@@ -11,7 +11,7 @@
 #include <map>
 #include <range/v3/view/cartesian_product.hpp>
 
-enum class RefQualifier : std::uint8_t { empty, lvalue, rvalue };
+enum class RefQualifier : std::uint8_t { empty = 0u, lvalue = 1u, rvalue = 2u };
 std::istream &operator>>(std::istream &is, RefQualifier &ref) {
   std::string raw(std::istreambuf_iterator<char>{is}, {});
   if (raw == "empty")
@@ -165,9 +165,9 @@ struct MemFnMask {
                                              : Operator::xor_op;
     mask.const_mask    = const_mask.to_view() == "1";
     mask.volatile_mask = volatile_mask.to_view() == "1";
-    mask.ref_mask      = const_mask.to_view() == "0" ? RefQualifier::empty
-                       : const_mask.to_view() == "1" ? RefQualifier::lvalue
-                                                     : RefQualifier::rvalue;
+    mask.ref_mask      = ref_mask.to_view() == "0" ? RefQualifier::empty
+                       : ref_mask.to_view() == "1" ? RefQualifier::lvalue
+                                                   : RefQualifier::rvalue;
     mask.noexcept_mask = noexcept_mask.to_view() == "1";
 
     return mask;
