@@ -90,30 +90,41 @@ struct is_noexcept : std::bool_constant<!std::is_same_v<remove_noexcept_t<T>, T>
 template <typename T>
 constexpr auto is_noexcept_v = is_noexcept<T>::value;
 
-namespace detail {
-template <bool, typename T>
-struct remove_const_impl : type_identity<T> {};
-template <bool noexcept_fn, typename R, typename T, typename... Args>
-struct remove_const_impl<noexcept_fn, R (T::*)(Args...) const noexcept(noexcept_fn)>
-    : type_identity<R (T::*)(Args...) noexcept(noexcept_fn)> {};
-template <bool noexcept_fn, typename R, typename T, typename... Args>
-struct remove_const_impl<noexcept_fn, R (T::*)(Args...) const volatile noexcept(noexcept_fn)>
-    : type_identity<R (T::*)(Args...) volatile noexcept(noexcept_fn)> {};
-template <bool noexcept_fn, typename R, typename T, typename... Args>
-struct remove_const_impl<noexcept_fn, R (T::*)(Args...) const &noexcept(noexcept_fn)>
-    : type_identity<R (T::*)(Args...) &noexcept(noexcept_fn)> {};
-template <bool noexcept_fn, typename R, typename T, typename... Args>
-struct remove_const_impl<noexcept_fn, R (T::*)(Args...) const volatile &noexcept(noexcept_fn)>
-    : type_identity<R (T::*)(Args...) volatile &noexcept(noexcept_fn)> {};
-template <bool noexcept_fn, typename R, typename T, typename... Args>
-struct remove_const_impl<noexcept_fn, R (T::*)(Args...) const &&noexcept(noexcept_fn)>
-    : type_identity<R (T::*)(Args...) &&noexcept(noexcept_fn)> {};
-template <bool noexcept_fn, typename R, typename T, typename... Args>
-struct remove_const_impl<noexcept_fn, R (T::*)(Args...) const volatile &&noexcept(noexcept_fn)>
-    : type_identity<R (T::*)(Args...) volatile &&noexcept(noexcept_fn)> {};
-} // namespace detail
 template <typename T>
-struct remove_const : detail::remove_const_impl<is_noexcept_v<T>, T> {};
+struct remove_const : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct remove_const<R (T::*)(Args...) const> : type_identity<R (T::*)(Args...)> {};
+template <typename R, typename T, typename... Args>
+struct remove_const<R (T::*)(Args...) const volatile>
+    : type_identity<R (T::*)(Args...) volatile> {};
+template <typename R, typename T, typename... Args>
+struct remove_const<R (T::*)(Args...) const noexcept>
+    : type_identity<R (T::*)(Args...) noexcept> {};
+template <typename R, typename T, typename... Args>
+struct remove_const<R (T::*)(Args...) const volatile noexcept>
+    : type_identity<R (T::*)(Args...) volatile noexcept> {};
+template <typename R, typename T, typename... Args>
+struct remove_const<R (T::*)(Args...) const &> : type_identity<R (T::*)(Args...) &> {};
+template <typename R, typename T, typename... Args>
+struct remove_const<R (T::*)(Args...) const volatile &>
+    : type_identity<R (T::*)(Args...) volatile &> {};
+template <typename R, typename T, typename... Args>
+struct remove_const<R (T::*)(Args...) const &noexcept>
+    : type_identity<R (T::*)(Args...) &noexcept> {};
+template <typename R, typename T, typename... Args>
+struct remove_const<R (T::*)(Args...) const volatile &noexcept>
+    : type_identity<R (T::*)(Args...) volatile &noexcept> {};
+template <typename R, typename T, typename... Args>
+struct remove_const<R (T::*)(Args...) const &&> : type_identity<R (T::*)(Args...) &&> {};
+template <typename R, typename T, typename... Args>
+struct remove_const<R (T::*)(Args...) const volatile &&>
+    : type_identity<R (T::*)(Args...) volatile &&> {};
+template <typename R, typename T, typename... Args>
+struct remove_const<R (T::*)(Args...) const &&noexcept>
+    : type_identity<R (T::*)(Args...) &&noexcept> {};
+template <typename R, typename T, typename... Args>
+struct remove_const<R (T::*)(Args...) const volatile &&noexcept>
+    : type_identity<R (T::*)(Args...) volatile &&noexcept> {};
 template <typename T>
 using remove_const_t = typename remove_const<T>::type;
 
