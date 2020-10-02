@@ -27,17 +27,14 @@ std::istream &operator>>(std::istream &is, RefQualifier &ref) {
         raw)};
   return is;
 }
-auto operator|(RefQualifier lhs, RefQualifier rhs) noexcept -> RefQualifier {
-  return static_cast<RefQualifier>(
-      static_cast<std::uint8_t>(static_cast<std::uint8_t>(lhs) | static_cast<std::uint8_t>(rhs)));
+auto operator|(RefQualifier lhs, std::uint8_t rhs) noexcept -> RefQualifier {
+  return static_cast<RefQualifier>(static_cast<std::uint8_t>(static_cast<std::uint8_t>(lhs) | rhs));
 }
-auto operator&(RefQualifier lhs, RefQualifier rhs) noexcept -> RefQualifier {
-  return static_cast<RefQualifier>(
-      static_cast<std::uint8_t>(static_cast<std::uint8_t>(lhs) & static_cast<std::uint8_t>(rhs)));
+auto operator&(RefQualifier lhs, std::uint8_t rhs) noexcept -> RefQualifier {
+  return static_cast<RefQualifier>(static_cast<std::uint8_t>(static_cast<std::uint8_t>(lhs) & rhs));
 }
-auto operator^(RefQualifier lhs, RefQualifier rhs) noexcept -> RefQualifier {
-  return static_cast<RefQualifier>(
-      static_cast<std::uint8_t>(static_cast<std::uint8_t>(lhs) ^ static_cast<std::uint8_t>(rhs)));
+auto operator^(RefQualifier lhs, std::uint8_t rhs) noexcept -> RefQualifier {
+  return static_cast<RefQualifier>(static_cast<std::uint8_t>(static_cast<std::uint8_t>(lhs) ^ rhs));
 }
 
 struct TypeFormatter {
@@ -148,10 +145,10 @@ struct MemFnMask {
   Operator op;
   bool const_mask{true};
   bool volatile_mask{true};
-  RefQualifier ref_mask{RefQualifier::empty};
+  std::uint8_t ref_mask{0u};
   bool noexcept_mask{true};
 
-  static constexpr auto pattern = ctll::fixed_string{"([\\|&^])([01])([01])([0-2])([01])"};
+  static constexpr auto pattern = ctll::fixed_string{"([\\|&^])([01])([01])([0-3])([01])"};
   static auto parse(std::string_view source) -> MemFnMask {
     auto mask = MemFnMask{};
     auto const &[whole, op, const_mask, volatile_mask, ref_mask, noexcept_mask] =
@@ -165,9 +162,7 @@ struct MemFnMask {
                                              : Operator::xor_op;
     mask.const_mask    = const_mask.to_view() == "1";
     mask.volatile_mask = volatile_mask.to_view() == "1";
-    mask.ref_mask      = ref_mask.to_view() == "0" ? RefQualifier::empty
-                       : ref_mask.to_view() == "1" ? RefQualifier::lvalue
-                                                   : RefQualifier::rvalue;
+    mask.ref_mask      = ref_mask.to_view()[0] - '0';
     mask.noexcept_mask = noexcept_mask.to_view() == "1";
 
     return mask;
