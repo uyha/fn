@@ -145,12 +145,15 @@ TEST_CASE("remove_const should return the same signature with no const specifier
 TEST_CASE("is_const should indicate if a member is const qualified") {
   CHECK(is_const_v<const_memfn>);
   CHECK(is_const_v<cv_memfn>);
+  CHECK(is_const_v<noexcept_const_memfn>);
   CHECK(is_const_v<noexcept_cv_memfn>);
   CHECK(is_const_v<lvalue_const_memfn>);
   CHECK(is_const_v<lvalue_cv_memfn>);
+  CHECK(is_const_v<lvalue_noexcept_const_memfn>);
   CHECK(is_const_v<lvalue_noexcept_cv_memfn>);
   CHECK(is_const_v<rvalue_const_memfn>);
   CHECK(is_const_v<rvalue_cv_memfn>);
+  CHECK(is_const_v<rvalue_noexcept_const_memfn>);
   CHECK(is_const_v<rvalue_noexcept_cv_memfn>);
 
   CHECK_FALSE(is_const_v<memfn>);
@@ -165,4 +168,70 @@ TEST_CASE("is_const should indicate if a member is const qualified") {
   CHECK_FALSE(is_const_v<rvalue_volatile_memfn>);
   CHECK_FALSE(is_const_v<rvalue_noexcept_memfn>);
   CHECK_FALSE(is_const_v<rvalue_noexcept_volatile_memfn>);
+}
+
+TEST_CASE("remove_volatile should return the same signature with no volatile specifier") {
+  SECTION("No reference qualified member functions") {
+    CHECK(std::is_same_v<remove_volatile_t<volatile_memfn>, memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<noexcept_volatile_memfn>, noexcept_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<cv_memfn>, const_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<noexcept_cv_memfn>, noexcept_const_memfn>);
+
+    CHECK(std::is_same_v<remove_volatile_t<memfn>, memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<noexcept_memfn>, noexcept_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<const_memfn>, const_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<noexcept_const_memfn>, noexcept_const_memfn>);
+  }
+  SECTION("lvalue qualified member functions") {
+    CHECK(std::is_same_v<remove_volatile_t<lvalue_volatile_memfn>, lvalue_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<lvalue_noexcept_volatile_memfn>, lvalue_noexcept_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<lvalue_cv_memfn>, lvalue_const_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<lvalue_noexcept_cv_memfn>, lvalue_noexcept_const_memfn>);
+
+    CHECK(std::is_same_v<remove_volatile_t<lvalue_memfn>, lvalue_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<lvalue_noexcept_memfn>, lvalue_noexcept_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<lvalue_const_memfn>, lvalue_const_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<lvalue_noexcept_const_memfn>,
+                         lvalue_noexcept_const_memfn>);
+  }
+  SECTION("rvalue reference qualified member functions") {
+    CHECK(std::is_same_v<remove_volatile_t<rvalue_volatile_memfn>, rvalue_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<rvalue_noexcept_volatile_memfn>, rvalue_noexcept_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<rvalue_cv_memfn>, rvalue_const_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<rvalue_noexcept_cv_memfn>, rvalue_noexcept_const_memfn>);
+
+    CHECK(std::is_same_v<remove_volatile_t<rvalue_memfn>, rvalue_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<rvalue_noexcept_memfn>, rvalue_noexcept_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<rvalue_const_memfn>, rvalue_const_memfn>);
+    CHECK(std::is_same_v<remove_volatile_t<rvalue_noexcept_const_memfn>,
+                         rvalue_noexcept_const_memfn>);
+  }
+}
+
+TEST_CASE("is_volatile should indicate if a member is volatile qualified") {
+  CHECK(is_volatile_v<volatile_memfn>);
+  CHECK(is_volatile_v<cv_memfn>);
+  CHECK(is_volatile_v<noexcept_volatile_memfn>);
+  CHECK(is_volatile_v<noexcept_cv_memfn>);
+  CHECK(is_volatile_v<lvalue_volatile_memfn>);
+  CHECK(is_volatile_v<lvalue_cv_memfn>);
+  CHECK(is_volatile_v<lvalue_noexcept_volatile_memfn>);
+  CHECK(is_volatile_v<lvalue_noexcept_cv_memfn>);
+  CHECK(is_volatile_v<rvalue_volatile_memfn>);
+  CHECK(is_volatile_v<rvalue_cv_memfn>);
+  CHECK(is_volatile_v<rvalue_noexcept_volatile_memfn>);
+  CHECK(is_volatile_v<rvalue_noexcept_cv_memfn>);
+
+  CHECK_FALSE(is_volatile_v<memfn>);
+  CHECK_FALSE(is_volatile_v<const_memfn>);
+  CHECK_FALSE(is_volatile_v<noexcept_memfn>);
+  CHECK_FALSE(is_volatile_v<noexcept_const_memfn>);
+  CHECK_FALSE(is_volatile_v<lvalue_memfn>);
+  CHECK_FALSE(is_volatile_v<lvalue_const_memfn>);
+  CHECK_FALSE(is_volatile_v<lvalue_noexcept_memfn>);
+  CHECK_FALSE(is_volatile_v<lvalue_noexcept_const_memfn>);
+  CHECK_FALSE(is_volatile_v<rvalue_memfn>);
+  CHECK_FALSE(is_volatile_v<rvalue_const_memfn>);
+  CHECK_FALSE(is_volatile_v<rvalue_noexcept_memfn>);
+  CHECK_FALSE(is_volatile_v<rvalue_noexcept_const_memfn>);
 }
