@@ -40,6 +40,8 @@ template <typename T>
 struct type_identity {
   using type = T;
 };
+template <typename T>
+using type_identity_t = typename type_identity<T>::type;
 
 template <typename T>
 struct remove_noexcept : type_identity<T> {};
@@ -131,7 +133,7 @@ constexpr T &&forward(typename std::remove_reference<T>::type &&t) noexcept {
   return static_cast<T &&>(t);
 }
 
-template <typename T, typename type_identity<T>::type>
+template <typename T, type_identity_t<T>>
 struct FnImpl;
 
 // region Free functions
