@@ -205,7 +205,7 @@ using remove_lvalue_t = typename remove_lvalue<T>::type;
 template <typename T>
 struct is_lvalue : std::bool_constant<!std::is_same_v<remove_lvalue_t<T>, T>> {};
 template <typename T>
-constexpr bool is_value_v = is_lvalue<T>::value;
+constexpr bool is_lvalue_v = is_lvalue<T>::value;
 
 namespace detail {
 template <typename T>
