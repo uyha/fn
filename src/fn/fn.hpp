@@ -207,6 +207,36 @@ struct is_lvalue : std::bool_constant<!std::is_same_v<remove_lvalue_t<T>, T>> {}
 template <typename T>
 constexpr bool is_lvalue_v = is_lvalue<T>::value;
 
+template <typename T>
+struct remove_rvalue : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct remove_rvalue<R (T::*)(Args...) &&> : type_identity<R (T::*)(Args...)> {};
+template <typename R, typename T, typename... Args>
+struct remove_rvalue<R (T::*)(Args...) const &&> : type_identity<R (T::*)(Args...) const> {};
+template <typename R, typename T, typename... Args>
+struct remove_rvalue<R (T::*)(Args...) volatile &&> : type_identity<R (T::*)(Args...) volatile> {};
+template <typename R, typename T, typename... Args>
+struct remove_rvalue<R (T::*)(Args...) const volatile &&>
+    : type_identity<R (T::*)(Args...) const volatile> {};
+template <typename R, typename T, typename... Args>
+struct remove_rvalue<R (T::*)(Args...) &&noexcept> : type_identity<R (T::*)(Args...) noexcept> {};
+template <typename R, typename T, typename... Args>
+struct remove_rvalue<R (T::*)(Args...) const &&noexcept>
+    : type_identity<R (T::*)(Args...) const noexcept> {};
+template <typename R, typename T, typename... Args>
+struct remove_rvalue<R (T::*)(Args...) volatile &&noexcept>
+    : type_identity<R (T::*)(Args...) volatile noexcept> {};
+template <typename R, typename T, typename... Args>
+struct remove_rvalue<R (T::*)(Args...) const volatile &&noexcept>
+    : type_identity<R (T::*)(Args...) const volatile noexcept> {};
+template <typename T>
+using remove_rvalue_t = typename remove_rvalue<T>::type;
+
+template <typename T>
+struct is_rvalue : std::bool_constant<!std::is_same_v<remove_rvalue_t<T>, T>> {};
+template <typename T>
+constexpr bool is_rvalue_v = is_rvalue<T>::value;
+
 namespace detail {
 template <typename T>
 constexpr T &&forward(typename std::remove_reference<T>::type &t) noexcept {
