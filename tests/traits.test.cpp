@@ -349,3 +349,30 @@ TEST_CASE("is_rvalue returns should indicate if a member function is rvalue refe
   CHECK_FALSE(is_rvalue_v<lvalue_noexcept_volatile_memfn>);
   CHECK_FALSE(is_rvalue_v<lvalue_noexcept_cv_memfn>);
 }
+
+TEST_CASE("object_type should return A for the member functions of A") {
+  CHECK(std::is_same_v<object_type_t<memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<const_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<volatile_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<cv_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<noexcept_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<noexcept_const_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<noexcept_volatile_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<noexcept_cv_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<lvalue_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<lvalue_const_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<lvalue_volatile_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<lvalue_cv_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<lvalue_noexcept_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<lvalue_noexcept_const_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<lvalue_noexcept_volatile_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<lvalue_noexcept_cv_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<rvalue_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<rvalue_const_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<rvalue_volatile_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<rvalue_cv_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<rvalue_noexcept_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<rvalue_noexcept_const_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<rvalue_noexcept_volatile_memfn>, A>);
+  CHECK(std::is_same_v<object_type_t<rvalue_noexcept_cv_memfn>, A>);
+}

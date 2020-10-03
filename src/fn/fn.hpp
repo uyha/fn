@@ -178,6 +178,15 @@ template <typename T>
 constexpr bool is_volatile_v = is_volatile<T>::value;
 
 template <typename T>
+struct remove_cv : remove_const<remove_volatile_t<T>> {};
+template <typename T>
+using remove_cv_t = typename remove_cv<T>::type;
+template <typename T>
+struct is_cv : std::bool_constant<!std::is_same_v<remove_cv_t<T>, T>> {};
+template <typename T>
+constexpr bool is_cv_v = is_cv<T>::value;
+
+template <typename T>
 struct remove_lvalue : type_identity<T> {};
 template <typename R, typename T, typename... Args>
 struct remove_lvalue<R (T::*)(Args...) &> : type_identity<R (T::*)(Args...)> {};
@@ -231,6 +240,59 @@ struct remove_rvalue<R (T::*)(Args...) const volatile &&noexcept>
     : type_identity<R (T::*)(Args...) const volatile noexcept> {};
 template <typename T>
 using remove_rvalue_t = typename remove_rvalue<T>::type;
+
+template <typename T>
+struct object_type;
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...)> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) const> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) volatile> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) const volatile> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) noexcept> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) const noexcept> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) volatile noexcept> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) const volatile noexcept> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) &> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) const &> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) volatile &> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) const volatile &> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) &noexcept> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) const &noexcept> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) volatile &noexcept> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) const volatile &noexcept> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) &&> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) const &&> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) volatile &&> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) const volatile &&> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) &&noexcept> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) const &&noexcept> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) volatile &&noexcept> : type_identity<T> {};
+template <typename R, typename T, typename... Args>
+struct object_type<R (T::*)(Args...) const volatile &&noexcept> : type_identity<T> {};
+template <typename T>
+using object_type_t = typename object_type<T>::type;
 
 template <typename T>
 struct is_rvalue : std::bool_constant<!std::is_same_v<remove_rvalue_t<T>, T>> {};
