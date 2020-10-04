@@ -9,10 +9,8 @@ using namespace river;
 template <typename...>
 struct print_type;
 
-using normal_fn       = void();
-using normal_fn_ptr   = void (*)();
-using noexcept_fn     = void() noexcept;
-using noexcept_fn_ptr = void (*)() noexcept;
+using normal_fn_ptr   = void (*)(int);
+using noexcept_fn_ptr = void (*)(int, long) noexcept;
 
 struct A {};
 using memfn                   = void (A::*)();
@@ -42,407 +40,281 @@ using rvalue_noexcept_const_memfn    = void (A::*)() const &&noexcept;
 using rvalue_noexcept_volatile_memfn = void (A::*)() volatile &&noexcept;
 using rvalue_noexcept_cv_memfn       = void (A::*)() const volatile &&noexcept;
 
-TEST_CASE("remove_noexcept should return the same signature with no noexcept specifier") {
-  SECTION("Normal functions") {
-    CHECK(std::is_same_v<remove_noexcept_t<noexcept_fn>, normal_fn>);
-    CHECK(std::is_same_v<remove_noexcept_t<noexcept_fn_ptr>, normal_fn_ptr>);
+TEST_CASE("fn_trait should return a type that contains the correct information about the (member) "
+          "function type") {
+  CHECK(fn_trait<normal_fn_ptr>::is_free_fn);
+  CHECK_FALSE(fn_trait<normal_fn_ptr>::is_member_fn);
+  CHECK_FALSE(fn_trait<normal_fn_ptr>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<normal_fn_ptr>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<normal_fn_ptr>::arguments, type_list<int>>);
 
-    CHECK(std::is_same_v<remove_noexcept_t<normal_fn>, normal_fn>);
-    CHECK(std::is_same_v<remove_noexcept_t<normal_fn_ptr>, normal_fn_ptr>);
-  }
+  CHECK(fn_trait<noexcept_fn_ptr>::is_free_fn);
+  CHECK_FALSE(fn_trait<noexcept_fn_ptr>::is_member_fn);
+  CHECK(fn_trait<noexcept_fn_ptr>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<noexcept_fn_ptr>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<noexcept_fn_ptr>::arguments, type_list<int, long>>);
 
-  SECTION("no reference qualified member functions") {
-    CHECK(std::is_same_v<remove_noexcept_t<noexcept_memfn>, memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<noexcept_const_memfn>, const_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<noexcept_volatile_memfn>, volatile_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<noexcept_cv_memfn>, cv_memfn>);
+  CHECK_FALSE(fn_trait<memfn>::is_free_fn);
+  CHECK(fn_trait<memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<memfn>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<memfn>::is_const);
+  CHECK_FALSE(fn_trait<memfn>::is_volatile);
+  CHECK_FALSE(fn_trait<memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<memfn>::arguments, type_list<>>);
 
-    CHECK(std::is_same_v<remove_noexcept_t<memfn>, memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<const_memfn>, const_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<volatile_memfn>, volatile_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<cv_memfn>, cv_memfn>);
-  }
+  CHECK_FALSE(fn_trait<const_memfn>::is_free_fn);
+  CHECK(fn_trait<const_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<const_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<const_memfn>::is_rvalue_ref);
+  CHECK(fn_trait<const_memfn>::is_const);
+  CHECK_FALSE(fn_trait<const_memfn>::is_volatile);
+  CHECK_FALSE(fn_trait<const_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<const_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<const_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<const_memfn>::arguments, type_list<>>);
 
-  SECTION("lvalue qualified member functions") {
-    CHECK(std::is_same_v<remove_noexcept_t<lvalue_noexcept_memfn>, lvalue_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<lvalue_noexcept_const_memfn>, lvalue_const_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<lvalue_noexcept_volatile_memfn>, lvalue_volatile_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<lvalue_noexcept_cv_memfn>, lvalue_cv_memfn>);
+  CHECK_FALSE(fn_trait<volatile_memfn>::is_free_fn);
+  CHECK(fn_trait<volatile_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<volatile_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<volatile_memfn>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<volatile_memfn>::is_const);
+  CHECK(fn_trait<volatile_memfn>::is_volatile);
+  CHECK_FALSE(fn_trait<volatile_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<volatile_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<volatile_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<volatile_memfn>::arguments, type_list<>>);
 
-    CHECK(std::is_same_v<remove_noexcept_t<lvalue_memfn>, lvalue_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<lvalue_const_memfn>, lvalue_const_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<lvalue_volatile_memfn>, lvalue_volatile_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<lvalue_cv_memfn>, lvalue_cv_memfn>);
-  }
+  CHECK_FALSE(fn_trait<cv_memfn>::is_free_fn);
+  CHECK(fn_trait<cv_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<cv_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<cv_memfn>::is_rvalue_ref);
+  CHECK(fn_trait<cv_memfn>::is_const);
+  CHECK(fn_trait<cv_memfn>::is_volatile);
+  CHECK_FALSE(fn_trait<cv_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<cv_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<cv_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<cv_memfn>::arguments, type_list<>>);
 
-  SECTION("rvalue qualified member functions") {
-    CHECK(std::is_same_v<remove_noexcept_t<rvalue_noexcept_memfn>, rvalue_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<rvalue_noexcept_const_memfn>, rvalue_const_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<rvalue_noexcept_volatile_memfn>, rvalue_volatile_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<rvalue_noexcept_cv_memfn>, rvalue_cv_memfn>);
+  CHECK_FALSE(fn_trait<noexcept_memfn>::is_free_fn);
+  CHECK(fn_trait<noexcept_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<noexcept_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<noexcept_memfn>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<noexcept_memfn>::is_const);
+  CHECK_FALSE(fn_trait<noexcept_memfn>::is_volatile);
+  CHECK(fn_trait<noexcept_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<noexcept_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<noexcept_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<noexcept_memfn>::arguments, type_list<>>);
 
-    CHECK(std::is_same_v<remove_noexcept_t<rvalue_memfn>, rvalue_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<rvalue_const_memfn>, rvalue_const_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<rvalue_volatile_memfn>, rvalue_volatile_memfn>);
-    CHECK(std::is_same_v<remove_noexcept_t<rvalue_cv_memfn>, rvalue_cv_memfn>);
-  }
-}
+  CHECK_FALSE(fn_trait<noexcept_const_memfn>::is_free_fn);
+  CHECK(fn_trait<noexcept_const_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<noexcept_const_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<noexcept_const_memfn>::is_rvalue_ref);
+  CHECK(fn_trait<noexcept_const_memfn>::is_const);
+  CHECK_FALSE(fn_trait<noexcept_const_memfn>::is_volatile);
+  CHECK(fn_trait<noexcept_const_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<noexcept_const_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<noexcept_const_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<noexcept_const_memfn>::arguments, type_list<>>);
 
-TEST_CASE("is_noexcept trait should return true for noexcept functions and false otherwise") {
-  CHECK(is_noexcept_v<noexcept_fn>);
-  CHECK(is_noexcept_v<noexcept_fn_ptr>);
-  CHECK(is_noexcept_v<noexcept_memfn>);
-  CHECK(is_noexcept_v<noexcept_const_memfn>);
-  CHECK(is_noexcept_v<noexcept_volatile_memfn>);
-  CHECK(is_noexcept_v<noexcept_cv_memfn>);
+  CHECK_FALSE(fn_trait<noexcept_volatile_memfn>::is_free_fn);
+  CHECK(fn_trait<noexcept_volatile_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<noexcept_volatile_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<noexcept_volatile_memfn>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<noexcept_volatile_memfn>::is_const);
+  CHECK(fn_trait<noexcept_volatile_memfn>::is_volatile);
+  CHECK(fn_trait<noexcept_volatile_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<noexcept_volatile_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<noexcept_volatile_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<noexcept_volatile_memfn>::arguments, type_list<>>);
 
-  CHECK_FALSE(is_noexcept_v<normal_fn>);
-  CHECK_FALSE(is_noexcept_v<normal_fn_ptr>);
-  CHECK_FALSE(is_noexcept_v<memfn>);
-  CHECK_FALSE(is_noexcept_v<const_memfn>);
-  CHECK_FALSE(is_noexcept_v<volatile_memfn>);
-  CHECK_FALSE(is_noexcept_v<cv_memfn>);
-}
+  CHECK_FALSE(fn_trait<noexcept_cv_memfn>::is_free_fn);
+  CHECK(fn_trait<noexcept_cv_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<noexcept_cv_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<noexcept_cv_memfn>::is_rvalue_ref);
+  CHECK(fn_trait<noexcept_cv_memfn>::is_const);
+  CHECK(fn_trait<noexcept_cv_memfn>::is_volatile);
+  CHECK(fn_trait<noexcept_cv_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<noexcept_cv_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<noexcept_cv_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<noexcept_cv_memfn>::arguments, type_list<>>);
 
-TEST_CASE("remove_const should return the same signature with no const specifier") {
-  SECTION("No reference qualified member functions") {
-    CHECK(std::is_same_v<remove_const_t<const_memfn>, memfn>);
-    CHECK(std::is_same_v<remove_const_t<noexcept_const_memfn>, noexcept_memfn>);
-    CHECK(std::is_same_v<remove_const_t<cv_memfn>, volatile_memfn>);
-    CHECK(std::is_same_v<remove_const_t<noexcept_cv_memfn>, noexcept_volatile_memfn>);
+  CHECK_FALSE(fn_trait<lvalue_memfn>::is_free_fn);
+  CHECK(fn_trait<lvalue_memfn>::is_member_fn);
+  CHECK(fn_trait<lvalue_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<lvalue_memfn>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<lvalue_memfn>::is_const);
+  CHECK_FALSE(fn_trait<lvalue_memfn>::is_volatile);
+  CHECK_FALSE(fn_trait<lvalue_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<lvalue_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<lvalue_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<lvalue_memfn>::arguments, type_list<>>);
 
-    CHECK(std::is_same_v<remove_const_t<memfn>, memfn>);
-    CHECK(std::is_same_v<remove_const_t<noexcept_memfn>, noexcept_memfn>);
-    CHECK(std::is_same_v<remove_const_t<volatile_memfn>, volatile_memfn>);
-    CHECK(std::is_same_v<remove_const_t<noexcept_volatile_memfn>, noexcept_volatile_memfn>);
-  }
-  SECTION("lvalue qualified member functions") {
-    CHECK(std::is_same_v<remove_const_t<lvalue_const_memfn>, lvalue_memfn>);
-    CHECK(std::is_same_v<remove_const_t<lvalue_noexcept_const_memfn>, lvalue_noexcept_memfn>);
-    CHECK(std::is_same_v<remove_const_t<lvalue_cv_memfn>, lvalue_volatile_memfn>);
-    CHECK(std::is_same_v<remove_const_t<lvalue_noexcept_cv_memfn>, lvalue_noexcept_volatile_memfn>);
+  CHECK_FALSE(fn_trait<lvalue_const_memfn>::is_free_fn);
+  CHECK(fn_trait<lvalue_const_memfn>::is_member_fn);
+  CHECK(fn_trait<lvalue_const_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<lvalue_const_memfn>::is_rvalue_ref);
+  CHECK(fn_trait<lvalue_const_memfn>::is_const);
+  CHECK_FALSE(fn_trait<lvalue_const_memfn>::is_volatile);
+  CHECK_FALSE(fn_trait<lvalue_const_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<lvalue_const_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<lvalue_const_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<lvalue_const_memfn>::arguments, type_list<>>);
 
-    CHECK(std::is_same_v<remove_const_t<lvalue_memfn>, lvalue_memfn>);
-    CHECK(std::is_same_v<remove_const_t<lvalue_noexcept_memfn>, lvalue_noexcept_memfn>);
-    CHECK(std::is_same_v<remove_const_t<lvalue_volatile_memfn>, lvalue_volatile_memfn>);
-    CHECK(std::is_same_v<remove_const_t<lvalue_noexcept_volatile_memfn>,
-                         lvalue_noexcept_volatile_memfn>);
-  }
-  SECTION("rvalue reference qualified member functions") {
-    CHECK(std::is_same_v<remove_const_t<rvalue_const_memfn>, rvalue_memfn>);
-    CHECK(std::is_same_v<remove_const_t<rvalue_noexcept_const_memfn>, rvalue_noexcept_memfn>);
-    CHECK(std::is_same_v<remove_const_t<rvalue_cv_memfn>, rvalue_volatile_memfn>);
-    CHECK(std::is_same_v<remove_const_t<rvalue_noexcept_cv_memfn>, rvalue_noexcept_volatile_memfn>);
+  CHECK_FALSE(fn_trait<lvalue_volatile_memfn>::is_free_fn);
+  CHECK(fn_trait<lvalue_volatile_memfn>::is_member_fn);
+  CHECK(fn_trait<lvalue_volatile_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<lvalue_volatile_memfn>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<lvalue_volatile_memfn>::is_const);
+  CHECK(fn_trait<lvalue_volatile_memfn>::is_volatile);
+  CHECK_FALSE(fn_trait<lvalue_volatile_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<lvalue_volatile_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<lvalue_volatile_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<lvalue_volatile_memfn>::arguments, type_list<>>);
 
-    CHECK(std::is_same_v<remove_const_t<rvalue_memfn>, rvalue_memfn>);
-    CHECK(std::is_same_v<remove_const_t<rvalue_noexcept_memfn>, rvalue_noexcept_memfn>);
-    CHECK(std::is_same_v<remove_const_t<rvalue_volatile_memfn>, rvalue_volatile_memfn>);
-    CHECK(std::is_same_v<remove_const_t<rvalue_noexcept_volatile_memfn>,
-                         rvalue_noexcept_volatile_memfn>);
-  }
-}
+  CHECK_FALSE(fn_trait<lvalue_cv_memfn>::is_free_fn);
+  CHECK(fn_trait<lvalue_cv_memfn>::is_member_fn);
+  CHECK(fn_trait<lvalue_cv_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<lvalue_cv_memfn>::is_rvalue_ref);
+  CHECK(fn_trait<lvalue_cv_memfn>::is_const);
+  CHECK(fn_trait<lvalue_cv_memfn>::is_volatile);
+  CHECK_FALSE(fn_trait<lvalue_cv_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<lvalue_cv_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<lvalue_cv_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<lvalue_cv_memfn>::arguments, type_list<>>);
 
-TEST_CASE("is_const should indicate if a member is const qualified") {
-  CHECK(is_const_v<const_memfn>);
-  CHECK(is_const_v<cv_memfn>);
-  CHECK(is_const_v<noexcept_const_memfn>);
-  CHECK(is_const_v<noexcept_cv_memfn>);
-  CHECK(is_const_v<lvalue_const_memfn>);
-  CHECK(is_const_v<lvalue_cv_memfn>);
-  CHECK(is_const_v<lvalue_noexcept_const_memfn>);
-  CHECK(is_const_v<lvalue_noexcept_cv_memfn>);
-  CHECK(is_const_v<rvalue_const_memfn>);
-  CHECK(is_const_v<rvalue_cv_memfn>);
-  CHECK(is_const_v<rvalue_noexcept_const_memfn>);
-  CHECK(is_const_v<rvalue_noexcept_cv_memfn>);
+  CHECK_FALSE(fn_trait<lvalue_noexcept_memfn>::is_free_fn);
+  CHECK(fn_trait<lvalue_noexcept_memfn>::is_member_fn);
+  CHECK(fn_trait<lvalue_noexcept_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<lvalue_noexcept_memfn>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<lvalue_noexcept_memfn>::is_const);
+  CHECK_FALSE(fn_trait<lvalue_noexcept_memfn>::is_volatile);
+  CHECK(fn_trait<lvalue_noexcept_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<lvalue_noexcept_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<lvalue_noexcept_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<lvalue_noexcept_memfn>::arguments, type_list<>>);
 
-  CHECK_FALSE(is_const_v<memfn>);
-  CHECK_FALSE(is_const_v<volatile_memfn>);
-  CHECK_FALSE(is_const_v<noexcept_memfn>);
-  CHECK_FALSE(is_const_v<noexcept_volatile_memfn>);
-  CHECK_FALSE(is_const_v<lvalue_memfn>);
-  CHECK_FALSE(is_const_v<lvalue_volatile_memfn>);
-  CHECK_FALSE(is_const_v<lvalue_noexcept_memfn>);
-  CHECK_FALSE(is_const_v<lvalue_noexcept_volatile_memfn>);
-  CHECK_FALSE(is_const_v<rvalue_memfn>);
-  CHECK_FALSE(is_const_v<rvalue_volatile_memfn>);
-  CHECK_FALSE(is_const_v<rvalue_noexcept_memfn>);
-  CHECK_FALSE(is_const_v<rvalue_noexcept_volatile_memfn>);
-}
+  CHECK_FALSE(fn_trait<lvalue_noexcept_const_memfn>::is_free_fn);
+  CHECK(fn_trait<lvalue_noexcept_const_memfn>::is_member_fn);
+  CHECK(fn_trait<lvalue_noexcept_const_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<lvalue_noexcept_const_memfn>::is_rvalue_ref);
+  CHECK(fn_trait<lvalue_noexcept_const_memfn>::is_const);
+  CHECK_FALSE(fn_trait<lvalue_noexcept_const_memfn>::is_volatile);
+  CHECK(fn_trait<lvalue_noexcept_const_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<lvalue_noexcept_const_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<lvalue_noexcept_const_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<lvalue_noexcept_const_memfn>::arguments, type_list<>>);
 
-TEST_CASE("remove_volatile should return the same signature with no volatile specifier") {
-  SECTION("No reference qualified member functions") {
-    CHECK(std::is_same_v<remove_volatile_t<volatile_memfn>, memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<noexcept_volatile_memfn>, noexcept_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<cv_memfn>, const_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<noexcept_cv_memfn>, noexcept_const_memfn>);
+  CHECK_FALSE(fn_trait<lvalue_noexcept_volatile_memfn>::is_free_fn);
+  CHECK(fn_trait<lvalue_noexcept_volatile_memfn>::is_member_fn);
+  CHECK(fn_trait<lvalue_noexcept_volatile_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<lvalue_noexcept_volatile_memfn>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<lvalue_noexcept_volatile_memfn>::is_const);
+  CHECK(fn_trait<lvalue_noexcept_volatile_memfn>::is_volatile);
+  CHECK(fn_trait<lvalue_noexcept_volatile_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<lvalue_noexcept_volatile_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<lvalue_noexcept_volatile_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<lvalue_noexcept_volatile_memfn>::arguments, type_list<>>);
 
-    CHECK(std::is_same_v<remove_volatile_t<memfn>, memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<noexcept_memfn>, noexcept_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<const_memfn>, const_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<noexcept_const_memfn>, noexcept_const_memfn>);
-  }
-  SECTION("lvalue qualified member functions") {
-    CHECK(std::is_same_v<remove_volatile_t<lvalue_volatile_memfn>, lvalue_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<lvalue_noexcept_volatile_memfn>, lvalue_noexcept_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<lvalue_cv_memfn>, lvalue_const_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<lvalue_noexcept_cv_memfn>, lvalue_noexcept_const_memfn>);
+  CHECK_FALSE(fn_trait<lvalue_noexcept_cv_memfn>::is_free_fn);
+  CHECK(fn_trait<lvalue_noexcept_cv_memfn>::is_member_fn);
+  CHECK(fn_trait<lvalue_noexcept_cv_memfn>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<lvalue_noexcept_cv_memfn>::is_rvalue_ref);
+  CHECK(fn_trait<lvalue_noexcept_cv_memfn>::is_const);
+  CHECK(fn_trait<lvalue_noexcept_cv_memfn>::is_volatile);
+  CHECK(fn_trait<lvalue_noexcept_cv_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<lvalue_noexcept_cv_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<lvalue_noexcept_cv_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<lvalue_noexcept_cv_memfn>::arguments, type_list<>>);
 
-    CHECK(std::is_same_v<remove_volatile_t<lvalue_memfn>, lvalue_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<lvalue_noexcept_memfn>, lvalue_noexcept_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<lvalue_const_memfn>, lvalue_const_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<lvalue_noexcept_const_memfn>,
-                         lvalue_noexcept_const_memfn>);
-  }
-  SECTION("rvalue reference qualified member functions") {
-    CHECK(std::is_same_v<remove_volatile_t<rvalue_volatile_memfn>, rvalue_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<rvalue_noexcept_volatile_memfn>, rvalue_noexcept_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<rvalue_cv_memfn>, rvalue_const_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<rvalue_noexcept_cv_memfn>, rvalue_noexcept_const_memfn>);
+  CHECK_FALSE(fn_trait<rvalue_memfn>::is_free_fn);
+  CHECK(fn_trait<rvalue_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<rvalue_memfn>::is_lvalue_ref);
+  CHECK(fn_trait<rvalue_memfn>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<rvalue_memfn>::is_const);
+  CHECK_FALSE(fn_trait<rvalue_memfn>::is_volatile);
+  CHECK_FALSE(fn_trait<rvalue_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<rvalue_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<rvalue_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<rvalue_memfn>::arguments, type_list<>>);
 
-    CHECK(std::is_same_v<remove_volatile_t<rvalue_memfn>, rvalue_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<rvalue_noexcept_memfn>, rvalue_noexcept_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<rvalue_const_memfn>, rvalue_const_memfn>);
-    CHECK(std::is_same_v<remove_volatile_t<rvalue_noexcept_const_memfn>,
-                         rvalue_noexcept_const_memfn>);
-  }
-}
+  CHECK_FALSE(fn_trait<rvalue_const_memfn>::is_free_fn);
+  CHECK(fn_trait<rvalue_const_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<rvalue_const_memfn>::is_lvalue_ref);
+  CHECK(fn_trait<rvalue_const_memfn>::is_rvalue_ref);
+  CHECK(fn_trait<rvalue_const_memfn>::is_const);
+  CHECK_FALSE(fn_trait<rvalue_const_memfn>::is_volatile);
+  CHECK_FALSE(fn_trait<rvalue_const_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<rvalue_const_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<rvalue_const_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<rvalue_const_memfn>::arguments, type_list<>>);
 
-TEST_CASE("is_volatile should indicate if a member is volatile qualified") {
-  CHECK(is_volatile_v<volatile_memfn>);
-  CHECK(is_volatile_v<cv_memfn>);
-  CHECK(is_volatile_v<noexcept_volatile_memfn>);
-  CHECK(is_volatile_v<noexcept_cv_memfn>);
-  CHECK(is_volatile_v<lvalue_volatile_memfn>);
-  CHECK(is_volatile_v<lvalue_cv_memfn>);
-  CHECK(is_volatile_v<lvalue_noexcept_volatile_memfn>);
-  CHECK(is_volatile_v<lvalue_noexcept_cv_memfn>);
-  CHECK(is_volatile_v<rvalue_volatile_memfn>);
-  CHECK(is_volatile_v<rvalue_cv_memfn>);
-  CHECK(is_volatile_v<rvalue_noexcept_volatile_memfn>);
-  CHECK(is_volatile_v<rvalue_noexcept_cv_memfn>);
+  CHECK_FALSE(fn_trait<rvalue_volatile_memfn>::is_free_fn);
+  CHECK(fn_trait<rvalue_volatile_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<rvalue_volatile_memfn>::is_lvalue_ref);
+  CHECK(fn_trait<rvalue_volatile_memfn>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<rvalue_volatile_memfn>::is_const);
+  CHECK(fn_trait<rvalue_volatile_memfn>::is_volatile);
+  CHECK_FALSE(fn_trait<rvalue_volatile_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<rvalue_volatile_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<rvalue_volatile_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<rvalue_volatile_memfn>::arguments, type_list<>>);
 
-  CHECK_FALSE(is_volatile_v<memfn>);
-  CHECK_FALSE(is_volatile_v<const_memfn>);
-  CHECK_FALSE(is_volatile_v<noexcept_memfn>);
-  CHECK_FALSE(is_volatile_v<noexcept_const_memfn>);
-  CHECK_FALSE(is_volatile_v<lvalue_memfn>);
-  CHECK_FALSE(is_volatile_v<lvalue_const_memfn>);
-  CHECK_FALSE(is_volatile_v<lvalue_noexcept_memfn>);
-  CHECK_FALSE(is_volatile_v<lvalue_noexcept_const_memfn>);
-  CHECK_FALSE(is_volatile_v<rvalue_memfn>);
-  CHECK_FALSE(is_volatile_v<rvalue_const_memfn>);
-  CHECK_FALSE(is_volatile_v<rvalue_noexcept_memfn>);
-  CHECK_FALSE(is_volatile_v<rvalue_noexcept_const_memfn>);
-}
+  CHECK_FALSE(fn_trait<rvalue_cv_memfn>::is_free_fn);
+  CHECK(fn_trait<rvalue_cv_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<rvalue_cv_memfn>::is_lvalue_ref);
+  CHECK(fn_trait<rvalue_cv_memfn>::is_rvalue_ref);
+  CHECK(fn_trait<rvalue_cv_memfn>::is_const);
+  CHECK(fn_trait<rvalue_cv_memfn>::is_volatile);
+  CHECK_FALSE(fn_trait<rvalue_cv_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<rvalue_cv_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<rvalue_cv_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<rvalue_cv_memfn>::arguments, type_list<>>);
 
-TEST_CASE("remove_cv should return the same signature with cv qualifiers") {
-  CHECK(std::is_same_v<remove_cv_t<memfn>, memfn>);
-  CHECK(std::is_same_v<remove_cv_t<const_memfn>, memfn>);
-  CHECK(std::is_same_v<remove_cv_t<volatile_memfn>, memfn>);
-  CHECK(std::is_same_v<remove_cv_t<cv_memfn>, memfn>);
-  CHECK(std::is_same_v<remove_cv_t<noexcept_memfn>, noexcept_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<noexcept_const_memfn>, noexcept_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<noexcept_volatile_memfn>, noexcept_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<noexcept_cv_memfn>, noexcept_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<lvalue_memfn>, lvalue_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<lvalue_const_memfn>, lvalue_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<lvalue_volatile_memfn>, lvalue_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<lvalue_cv_memfn>, lvalue_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<lvalue_noexcept_memfn>, lvalue_noexcept_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<lvalue_noexcept_const_memfn>, lvalue_noexcept_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<lvalue_noexcept_volatile_memfn>, lvalue_noexcept_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<lvalue_noexcept_cv_memfn>, lvalue_noexcept_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<rvalue_memfn>, rvalue_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<rvalue_const_memfn>, rvalue_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<rvalue_volatile_memfn>, rvalue_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<rvalue_cv_memfn>, rvalue_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<rvalue_noexcept_memfn>, rvalue_noexcept_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<rvalue_noexcept_const_memfn>, rvalue_noexcept_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<rvalue_noexcept_volatile_memfn>, rvalue_noexcept_memfn>);
-  CHECK(std::is_same_v<remove_cv_t<rvalue_noexcept_cv_memfn>, rvalue_noexcept_memfn>);
-}
+  CHECK_FALSE(fn_trait<rvalue_noexcept_memfn>::is_free_fn);
+  CHECK(fn_trait<rvalue_noexcept_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<rvalue_noexcept_memfn>::is_lvalue_ref);
+  CHECK(fn_trait<rvalue_noexcept_memfn>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<rvalue_noexcept_memfn>::is_const);
+  CHECK_FALSE(fn_trait<rvalue_noexcept_memfn>::is_volatile);
+  CHECK(fn_trait<rvalue_noexcept_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<rvalue_noexcept_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<rvalue_noexcept_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<rvalue_noexcept_memfn>::arguments, type_list<>>);
 
-TEST_CASE(
-    "remove_lvalue_reference should return the same signature with no lvalue reference specifier") {
-  CHECK(std::is_same_v<remove_lvalue_reference_t<lvalue_memfn>, memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<lvalue_const_memfn>, const_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<lvalue_volatile_memfn>, volatile_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<lvalue_cv_memfn>, cv_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<lvalue_noexcept_memfn>, noexcept_memfn>);
-  CHECK(
-      std::is_same_v<remove_lvalue_reference_t<lvalue_noexcept_const_memfn>, noexcept_const_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<lvalue_noexcept_volatile_memfn>,
-                       noexcept_volatile_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<lvalue_noexcept_cv_memfn>, noexcept_cv_memfn>);
+  CHECK_FALSE(fn_trait<rvalue_noexcept_const_memfn>::is_free_fn);
+  CHECK(fn_trait<rvalue_noexcept_const_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<rvalue_noexcept_const_memfn>::is_lvalue_ref);
+  CHECK(fn_trait<rvalue_noexcept_const_memfn>::is_rvalue_ref);
+  CHECK(fn_trait<rvalue_noexcept_const_memfn>::is_const);
+  CHECK_FALSE(fn_trait<rvalue_noexcept_const_memfn>::is_volatile);
+  CHECK(fn_trait<rvalue_noexcept_const_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<rvalue_noexcept_const_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<rvalue_noexcept_const_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<rvalue_noexcept_const_memfn>::arguments, type_list<>>);
 
-  CHECK(std::is_same_v<remove_lvalue_reference_t<memfn>, memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<const_memfn>, const_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<volatile_memfn>, volatile_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<cv_memfn>, cv_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<noexcept_memfn>, noexcept_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<noexcept_const_memfn>, noexcept_const_memfn>);
-  CHECK(
-      std::is_same_v<remove_lvalue_reference_t<noexcept_volatile_memfn>, noexcept_volatile_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<noexcept_cv_memfn>, noexcept_cv_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<rvalue_memfn>, rvalue_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<rvalue_const_memfn>, rvalue_const_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<rvalue_volatile_memfn>, rvalue_volatile_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<rvalue_cv_memfn>, rvalue_cv_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<rvalue_noexcept_memfn>, rvalue_noexcept_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<rvalue_noexcept_const_memfn>,
-                       rvalue_noexcept_const_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<rvalue_noexcept_volatile_memfn>,
-                       rvalue_noexcept_volatile_memfn>);
-  CHECK(std::is_same_v<remove_lvalue_reference_t<rvalue_noexcept_cv_memfn>,
-                       rvalue_noexcept_cv_memfn>);
-}
+  CHECK_FALSE(fn_trait<rvalue_noexcept_volatile_memfn>::is_free_fn);
+  CHECK(fn_trait<rvalue_noexcept_volatile_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<rvalue_noexcept_volatile_memfn>::is_lvalue_ref);
+  CHECK(fn_trait<rvalue_noexcept_volatile_memfn>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<rvalue_noexcept_volatile_memfn>::is_const);
+  CHECK(fn_trait<rvalue_noexcept_volatile_memfn>::is_volatile);
+  CHECK(fn_trait<rvalue_noexcept_volatile_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<rvalue_noexcept_volatile_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<rvalue_noexcept_volatile_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<rvalue_noexcept_volatile_memfn>::arguments, type_list<>>);
 
-TEST_CASE("is_lvalue_reference returns should indicate if a member function is lvalue reference "
-          "qualified") {
-  CHECK(is_lvalue_reference_v<lvalue_memfn>);
-  CHECK(is_lvalue_reference_v<lvalue_const_memfn>);
-  CHECK(is_lvalue_reference_v<lvalue_volatile_memfn>);
-  CHECK(is_lvalue_reference_v<lvalue_cv_memfn>);
-  CHECK(is_lvalue_reference_v<lvalue_noexcept_memfn>);
-  CHECK(is_lvalue_reference_v<lvalue_noexcept_const_memfn>);
-  CHECK(is_lvalue_reference_v<lvalue_noexcept_volatile_memfn>);
-  CHECK(is_lvalue_reference_v<lvalue_noexcept_cv_memfn>);
-
-  CHECK_FALSE(is_lvalue_reference_v<memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<const_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<volatile_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<cv_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<noexcept_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<noexcept_const_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<noexcept_volatile_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<noexcept_cv_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<rvalue_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<rvalue_const_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<rvalue_volatile_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<rvalue_cv_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<rvalue_noexcept_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<rvalue_noexcept_const_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<rvalue_noexcept_volatile_memfn>);
-  CHECK_FALSE(is_lvalue_reference_v<rvalue_noexcept_cv_memfn>);
-}
-
-TEST_CASE(
-    "remove_rvalue_reference should return the same signature with no rvalue reference specifier") {
-  CHECK(std::is_same_v<remove_rvalue_reference_t<rvalue_memfn>, memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<rvalue_const_memfn>, const_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<rvalue_volatile_memfn>, volatile_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<rvalue_cv_memfn>, cv_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<rvalue_noexcept_memfn>, noexcept_memfn>);
-  CHECK(
-      std::is_same_v<remove_rvalue_reference_t<rvalue_noexcept_const_memfn>, noexcept_const_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<rvalue_noexcept_volatile_memfn>,
-                       noexcept_volatile_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<rvalue_noexcept_cv_memfn>, noexcept_cv_memfn>);
-
-  CHECK(std::is_same_v<remove_rvalue_reference_t<memfn>, memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<const_memfn>, const_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<volatile_memfn>, volatile_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<cv_memfn>, cv_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<noexcept_memfn>, noexcept_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<noexcept_const_memfn>, noexcept_const_memfn>);
-  CHECK(
-      std::is_same_v<remove_rvalue_reference_t<noexcept_volatile_memfn>, noexcept_volatile_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<noexcept_cv_memfn>, noexcept_cv_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<lvalue_memfn>, lvalue_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<lvalue_const_memfn>, lvalue_const_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<lvalue_volatile_memfn>, lvalue_volatile_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<lvalue_cv_memfn>, lvalue_cv_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<lvalue_noexcept_memfn>, lvalue_noexcept_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<lvalue_noexcept_const_memfn>,
-                       lvalue_noexcept_const_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<lvalue_noexcept_volatile_memfn>,
-                       lvalue_noexcept_volatile_memfn>);
-  CHECK(std::is_same_v<remove_rvalue_reference_t<lvalue_noexcept_cv_memfn>,
-                       lvalue_noexcept_cv_memfn>);
-}
-
-TEST_CASE("is_rvalue_reference returns should indicate if a member function is rvalue reference "
-          "qualified") {
-  CHECK(is_rvalue_reference_v<rvalue_memfn>);
-  CHECK(is_rvalue_reference_v<rvalue_const_memfn>);
-  CHECK(is_rvalue_reference_v<rvalue_volatile_memfn>);
-  CHECK(is_rvalue_reference_v<rvalue_cv_memfn>);
-  CHECK(is_rvalue_reference_v<rvalue_noexcept_memfn>);
-  CHECK(is_rvalue_reference_v<rvalue_noexcept_const_memfn>);
-  CHECK(is_rvalue_reference_v<rvalue_noexcept_volatile_memfn>);
-  CHECK(is_rvalue_reference_v<rvalue_noexcept_cv_memfn>);
-
-  CHECK_FALSE(is_rvalue_reference_v<memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<const_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<volatile_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<cv_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<noexcept_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<noexcept_const_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<noexcept_volatile_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<noexcept_cv_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<lvalue_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<lvalue_const_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<lvalue_volatile_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<lvalue_cv_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<lvalue_noexcept_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<lvalue_noexcept_const_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<lvalue_noexcept_volatile_memfn>);
-  CHECK_FALSE(is_rvalue_reference_v<lvalue_noexcept_cv_memfn>);
-}
-
-TEST_CASE("object_type should return A for the member functions of A") {
-  CHECK(std::is_same_v<object_type_t<memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<const_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<volatile_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<cv_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<noexcept_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<noexcept_const_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<noexcept_volatile_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<noexcept_cv_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<lvalue_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<lvalue_const_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<lvalue_volatile_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<lvalue_cv_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<lvalue_noexcept_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<lvalue_noexcept_const_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<lvalue_noexcept_volatile_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<lvalue_noexcept_cv_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<rvalue_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<rvalue_const_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<rvalue_volatile_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<rvalue_cv_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<rvalue_noexcept_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<rvalue_noexcept_const_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<rvalue_noexcept_volatile_memfn>, A>);
-  CHECK(std::is_same_v<object_type_t<rvalue_noexcept_cv_memfn>, A>);
-}
-
-TEST_CASE(
-    "object_argument_type should return the argument type to be used as the first argument of fn") {
-  using namespace detail;
-  CHECK(std::is_same_v<object_argument_type_t<memfn>, A &>);
-  CHECK(std::is_same_v<object_argument_type_t<const_memfn>, A const &>);
-  CHECK(std::is_same_v<object_argument_type_t<volatile_memfn>, A volatile &>);
-  CHECK(std::is_same_v<object_argument_type_t<cv_memfn>, A const volatile &>);
-  CHECK(std::is_same_v<object_argument_type_t<noexcept_memfn>, A &>);
-  CHECK(std::is_same_v<object_argument_type_t<noexcept_const_memfn>, A const &>);
-  CHECK(std::is_same_v<object_argument_type_t<noexcept_volatile_memfn>, A volatile &>);
-  CHECK(std::is_same_v<object_argument_type_t<noexcept_cv_memfn>, A const volatile &>);
-  CHECK(std::is_same_v<object_argument_type_t<lvalue_memfn>, A &>);
-  CHECK(std::is_same_v<object_argument_type_t<lvalue_const_memfn>, A const &>);
-  CHECK(std::is_same_v<object_argument_type_t<lvalue_volatile_memfn>, A volatile &>);
-  CHECK(std::is_same_v<object_argument_type_t<lvalue_cv_memfn>, A const volatile &>);
-  CHECK(std::is_same_v<object_argument_type_t<lvalue_noexcept_memfn>, A &>);
-  CHECK(std::is_same_v<object_argument_type_t<lvalue_noexcept_const_memfn>, A const &>);
-  CHECK(std::is_same_v<object_argument_type_t<lvalue_noexcept_volatile_memfn>, A volatile &>);
-  CHECK(std::is_same_v<object_argument_type_t<lvalue_noexcept_cv_memfn>, A const volatile &>);
-  CHECK(std::is_same_v<object_argument_type_t<rvalue_memfn>, A &&>);
-  CHECK(std::is_same_v<object_argument_type_t<rvalue_const_memfn>, A const &&>);
-  CHECK(std::is_same_v<object_argument_type_t<rvalue_volatile_memfn>, A volatile &&>);
-  CHECK(std::is_same_v<object_argument_type_t<rvalue_cv_memfn>, A const volatile &&>);
-  CHECK(std::is_same_v<object_argument_type_t<rvalue_noexcept_memfn>, A &&>);
-  CHECK(std::is_same_v<object_argument_type_t<rvalue_noexcept_const_memfn>, A const &&>);
-  CHECK(std::is_same_v<object_argument_type_t<rvalue_noexcept_volatile_memfn>, A volatile &&>);
-  CHECK(std::is_same_v<object_argument_type_t<rvalue_noexcept_cv_memfn>, A const volatile &&>);
+  CHECK_FALSE(fn_trait<rvalue_noexcept_cv_memfn>::is_free_fn);
+  CHECK(fn_trait<rvalue_noexcept_cv_memfn>::is_member_fn);
+  CHECK_FALSE(fn_trait<rvalue_noexcept_cv_memfn>::is_lvalue_ref);
+  CHECK(fn_trait<rvalue_noexcept_cv_memfn>::is_rvalue_ref);
+  CHECK(fn_trait<rvalue_noexcept_cv_memfn>::is_const);
+  CHECK(fn_trait<rvalue_noexcept_cv_memfn>::is_volatile);
+  CHECK(fn_trait<rvalue_noexcept_cv_memfn>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<rvalue_noexcept_cv_memfn>::return_type, void>);
+  CHECK(std::is_same_v<fn_trait<rvalue_noexcept_cv_memfn>::object_type, A>);
+  CHECK(std::is_same_v<fn_trait<rvalue_noexcept_cv_memfn>::arguments, type_list<>>);
 }

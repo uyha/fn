@@ -25,288 +25,368 @@
 #pragma once
 #include <type_traits>
 
-#ifndef FN_ENABLE_OVERLOAD
-#define FN_ENABLE_OVERLOAD 1
-#endif
-
-#if FN_NO_PROPAGATE_NOEXCEPT
-#define FN_NOEXCEPT
-#else
-#define FN_NOEXCEPT noexcept
-#endif
-
 namespace river {
+template <typename... Ts>
+struct type_list {};
+
+// region fn_trait
 template <typename T>
-struct type_identity {
-  using type = T;
+struct fn_trait;
+template <typename R, typename... Args>
+struct fn_trait<R (*)(Args...)> {
+  static constexpr bool is_free_fn   = true;
+  static constexpr bool is_member_fn = false;
+  static constexpr bool is_noexcept  = false;
+
+  using return_type = R;
+  using arguments   = type_list<Args...>;
 };
-template <typename T>
-using type_identity_t = typename type_identity<T>::type;
-
-template <typename T>
-struct remove_noexcept : type_identity<T> {};
 template <typename R, typename... Args>
-struct remove_noexcept<R(Args...) noexcept> : type_identity<R(Args...)> {};
-template <typename R, typename... Args>
-struct remove_noexcept<R (*)(Args...) noexcept> : type_identity<R (*)(Args...)> {};
-template <typename R, typename T, typename... Args>
-struct remove_noexcept<R (T::*)(Args...) noexcept> : type_identity<R (T::*)(Args...)> {};
-template <typename R, typename T, typename... Args>
-struct remove_noexcept<R (T::*)(Args...) const noexcept>
-    : type_identity<R (T::*)(Args...) const> {};
-template <typename R, typename T, typename... Args>
-struct remove_noexcept<R (T::*)(Args...) volatile noexcept>
-    : type_identity<R (T::*)(Args...) volatile> {};
-template <typename R, typename T, typename... Args>
-struct remove_noexcept<R (T::*)(Args...) const volatile noexcept>
-    : type_identity<R (T::*)(Args...) const volatile> {};
-template <typename R, typename T, typename... Args>
-struct remove_noexcept<R (T::*)(Args...) &noexcept> : type_identity<R (T::*)(Args...) &> {};
-template <typename R, typename T, typename... Args>
-struct remove_noexcept<R (T::*)(Args...) const &noexcept>
-    : type_identity<R (T::*)(Args...) const &> {};
-template <typename R, typename T, typename... Args>
-struct remove_noexcept<R (T::*)(Args...) volatile &noexcept>
-    : type_identity<R (T::*)(Args...) volatile &> {};
-template <typename R, typename T, typename... Args>
-struct remove_noexcept<R (T::*)(Args...) const volatile &noexcept>
-    : type_identity<R (T::*)(Args...) const volatile &> {};
-template <typename R, typename T, typename... Args>
-struct remove_noexcept<R (T::*)(Args...) &&noexcept> : type_identity<R (T::*)(Args...) &&> {};
-template <typename R, typename T, typename... Args>
-struct remove_noexcept<R (T::*)(Args...) const &&noexcept>
-    : type_identity<R (T::*)(Args...) const &&> {};
-template <typename R, typename T, typename... Args>
-struct remove_noexcept<R (T::*)(Args...) volatile &&noexcept>
-    : type_identity<R (T::*)(Args...) volatile &&> {};
-template <typename R, typename T, typename... Args>
-struct remove_noexcept<R (T::*)(Args...) const volatile &&noexcept>
-    : type_identity<R (T::*)(Args...) const volatile &&> {};
-template <typename T>
-using remove_noexcept_t = typename remove_noexcept<T>::type;
+struct fn_trait<R (*)(Args...) noexcept> {
+  static constexpr bool is_free_fn   = true;
+  static constexpr bool is_member_fn = false;
+  static constexpr bool is_noexcept  = true;
 
-template <typename T>
-struct is_noexcept : std::bool_constant<!std::is_same_v<remove_noexcept_t<T>, T>> {};
-template <typename T>
-constexpr auto is_noexcept_v = is_noexcept<T>::value;
+  using return_type = R;
+  using arguments   = type_list<Args...>;
+};
+template <typename R, typename T, typename... Args>
+struct fn_trait<R (T::*)(Args...)> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = false;
 
-template <typename T>
-struct remove_const : type_identity<T> {};
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct remove_const<R (T::*)(Args...) const> : type_identity<R (T::*)(Args...)> {};
-template <typename R, typename T, typename... Args>
-struct remove_const<R (T::*)(Args...) const volatile>
-    : type_identity<R (T::*)(Args...) volatile> {};
-template <typename R, typename T, typename... Args>
-struct remove_const<R (T::*)(Args...) const noexcept>
-    : type_identity<R (T::*)(Args...) noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_const<R (T::*)(Args...) const volatile noexcept>
-    : type_identity<R (T::*)(Args...) volatile noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_const<R (T::*)(Args...) const &> : type_identity<R (T::*)(Args...) &> {};
-template <typename R, typename T, typename... Args>
-struct remove_const<R (T::*)(Args...) const volatile &>
-    : type_identity<R (T::*)(Args...) volatile &> {};
-template <typename R, typename T, typename... Args>
-struct remove_const<R (T::*)(Args...) const &noexcept>
-    : type_identity<R (T::*)(Args...) &noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_const<R (T::*)(Args...) const volatile &noexcept>
-    : type_identity<R (T::*)(Args...) volatile &noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_const<R (T::*)(Args...) const &&> : type_identity<R (T::*)(Args...) &&> {};
-template <typename R, typename T, typename... Args>
-struct remove_const<R (T::*)(Args...) const volatile &&>
-    : type_identity<R (T::*)(Args...) volatile &&> {};
-template <typename R, typename T, typename... Args>
-struct remove_const<R (T::*)(Args...) const &&noexcept>
-    : type_identity<R (T::*)(Args...) &&noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_const<R (T::*)(Args...) const volatile &&noexcept>
-    : type_identity<R (T::*)(Args...) volatile &&noexcept> {};
-template <typename T>
-using remove_const_t = typename remove_const<T>::type;
+struct fn_trait<R (T::*)(Args...) const> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = true;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = false;
 
-template <typename T>
-struct is_const : std::bool_constant<!std::is_same_v<remove_const_t<T>, T>> {};
-template <typename T>
-constexpr auto is_const_v = is_const<T>::value;
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
+template <typename R, typename T, typename... Args>
+struct fn_trait<R (T::*)(Args...) volatile> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = true;
+  static constexpr bool is_noexcept   = false;
 
-template <typename T>
-struct remove_volatile : type_identity<T> {};
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct remove_volatile<R (T::*)(Args...) volatile> : type_identity<R (T::*)(Args...)> {};
-template <typename R, typename T, typename... Args>
-struct remove_volatile<R (T::*)(Args...) const volatile>
-    : type_identity<R (T::*)(Args...) const> {};
-template <typename R, typename T, typename... Args>
-struct remove_volatile<R (T::*)(Args...) volatile noexcept>
-    : type_identity<R (T::*)(Args...) noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_volatile<R (T::*)(Args...) const volatile noexcept>
-    : type_identity<R (T::*)(Args...) const noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_volatile<R (T::*)(Args...) volatile &> : type_identity<R (T::*)(Args...) &> {};
-template <typename R, typename T, typename... Args>
-struct remove_volatile<R (T::*)(Args...) const volatile &>
-    : type_identity<R (T::*)(Args...) const &> {};
-template <typename R, typename T, typename... Args>
-struct remove_volatile<R (T::*)(Args...) volatile &noexcept>
-    : type_identity<R (T::*)(Args...) &noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_volatile<R (T::*)(Args...) const volatile &noexcept>
-    : type_identity<R (T::*)(Args...) const &noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_volatile<R (T::*)(Args...) volatile &&> : type_identity<R (T::*)(Args...) &&> {};
-template <typename R, typename T, typename... Args>
-struct remove_volatile<R (T::*)(Args...) const volatile &&>
-    : type_identity<R (T::*)(Args...) const &&> {};
-template <typename R, typename T, typename... Args>
-struct remove_volatile<R (T::*)(Args...) volatile &&noexcept>
-    : type_identity<R (T::*)(Args...) &&noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_volatile<R (T::*)(Args...) const volatile &&noexcept>
-    : type_identity<R (T::*)(Args...) const &&noexcept> {};
+struct fn_trait<R (T::*)(Args...) const volatile> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = true;
+  static constexpr bool is_volatile   = true;
+  static constexpr bool is_noexcept   = false;
 
-template <typename T>
-using remove_volatile_t = typename remove_volatile<T>::type;
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
+template <typename R, typename T, typename... Args>
+struct fn_trait<R (T::*)(Args...) noexcept> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = true;
 
-template <typename T>
-struct is_volatile : std::bool_constant<!std::is_same_v<remove_volatile_t<T>, T>> {};
-template <typename T>
-constexpr bool is_volatile_v = is_volatile<T>::value;
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
+template <typename R, typename T, typename... Args>
+struct fn_trait<R (T::*)(Args...) const noexcept> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = true;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = true;
 
-template <typename T>
-struct remove_cv : remove_const<remove_volatile_t<T>> {};
-template <typename T>
-using remove_cv_t = typename remove_cv<T>::type;
-template <typename T>
-struct is_cv : std::bool_constant<is_const_v<T> && is_volatile_v<T>> {};
-template <typename T>
-constexpr bool is_cv_v = is_cv<T>::value;
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
+template <typename R, typename T, typename... Args>
+struct fn_trait<R (T::*)(Args...) volatile noexcept> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = true;
+  static constexpr bool is_noexcept   = true;
 
-template <typename T>
-struct remove_lvalue_reference : type_identity<T> {};
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct remove_lvalue_reference<R (T::*)(Args...) &> : type_identity<R (T::*)(Args...)> {};
-template <typename R, typename T, typename... Args>
-struct remove_lvalue_reference<R (T::*)(Args...) const &>
-    : type_identity<R (T::*)(Args...) const> {};
-template <typename R, typename T, typename... Args>
-struct remove_lvalue_reference<R (T::*)(Args...) volatile &>
-    : type_identity<R (T::*)(Args...) volatile> {};
-template <typename R, typename T, typename... Args>
-struct remove_lvalue_reference<R (T::*)(Args...) const volatile &>
-    : type_identity<R (T::*)(Args...) const volatile> {};
-template <typename R, typename T, typename... Args>
-struct remove_lvalue_reference<R (T::*)(Args...) &noexcept>
-    : type_identity<R (T::*)(Args...) noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_lvalue_reference<R (T::*)(Args...) const &noexcept>
-    : type_identity<R (T::*)(Args...) const noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_lvalue_reference<R (T::*)(Args...) volatile &noexcept>
-    : type_identity<R (T::*)(Args...) volatile noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_lvalue_reference<R (T::*)(Args...) const volatile &noexcept>
-    : type_identity<R (T::*)(Args...) const volatile noexcept> {};
-template <typename T>
-using remove_lvalue_reference_t = typename remove_lvalue_reference<T>::type;
+struct fn_trait<R (T::*)(Args...) const volatile noexcept> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = true;
+  static constexpr bool is_volatile   = true;
+  static constexpr bool is_noexcept   = true;
 
-template <typename T>
-struct is_lvalue_reference
-    : std::bool_constant<!std::is_same_v<remove_lvalue_reference_t<T>, T>> {};
-template <typename T>
-constexpr bool is_lvalue_reference_v = is_lvalue_reference<T>::value;
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
+template <typename R, typename T, typename... Args>
+struct fn_trait<R (T::*)(Args...) &> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = true;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = false;
 
-template <typename T>
-struct remove_rvalue_reference : type_identity<T> {};
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct remove_rvalue_reference<R (T::*)(Args...) &&> : type_identity<R (T::*)(Args...)> {};
-template <typename R, typename T, typename... Args>
-struct remove_rvalue_reference<R (T::*)(Args...) const &&>
-    : type_identity<R (T::*)(Args...) const> {};
-template <typename R, typename T, typename... Args>
-struct remove_rvalue_reference<R (T::*)(Args...) volatile &&>
-    : type_identity<R (T::*)(Args...) volatile> {};
-template <typename R, typename T, typename... Args>
-struct remove_rvalue_reference<R (T::*)(Args...) const volatile &&>
-    : type_identity<R (T::*)(Args...) const volatile> {};
-template <typename R, typename T, typename... Args>
-struct remove_rvalue_reference<R (T::*)(Args...) &&noexcept>
-    : type_identity<R (T::*)(Args...) noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_rvalue_reference<R (T::*)(Args...) const &&noexcept>
-    : type_identity<R (T::*)(Args...) const noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_rvalue_reference<R (T::*)(Args...) volatile &&noexcept>
-    : type_identity<R (T::*)(Args...) volatile noexcept> {};
-template <typename R, typename T, typename... Args>
-struct remove_rvalue_reference<R (T::*)(Args...) const volatile &&noexcept>
-    : type_identity<R (T::*)(Args...) const volatile noexcept> {};
+struct fn_trait<R (T::*)(Args...) const &> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = true;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = true;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = false;
 
-template <typename T>
-using remove_rvalue_reference_t = typename remove_rvalue_reference<T>::type;
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
+template <typename R, typename T, typename... Args>
+struct fn_trait<R (T::*)(Args...) volatile &> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = true;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = true;
+  static constexpr bool is_noexcept   = false;
 
-template <typename T>
-struct is_rvalue_reference
-    : std::bool_constant<!std::is_same_v<remove_rvalue_reference_t<T>, T>> {};
-template <typename T>
-constexpr bool is_rvalue_reference_v = is_rvalue_reference<T>::value;
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
+template <typename R, typename T, typename... Args>
+struct fn_trait<R (T::*)(Args...) const volatile &> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = true;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = true;
+  static constexpr bool is_volatile   = true;
+  static constexpr bool is_noexcept   = false;
 
-template <typename T>
-struct object_type;
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...)> : type_identity<T> {};
+struct fn_trait<R (T::*)(Args...) &noexcept> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = true;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = true;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) const> : type_identity<T> {};
+struct fn_trait<R (T::*)(Args...) const &noexcept> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = true;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = true;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = true;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) volatile> : type_identity<T> {};
+struct fn_trait<R (T::*)(Args...) volatile &noexcept> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = true;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = true;
+  static constexpr bool is_noexcept   = true;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) const volatile> : type_identity<T> {};
+struct fn_trait<R (T::*)(Args...) const volatile &noexcept> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = true;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = true;
+  static constexpr bool is_volatile   = true;
+  static constexpr bool is_noexcept   = true;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) noexcept> : type_identity<T> {};
+struct fn_trait<R (T::*)(Args...) &&> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = true;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = false;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) const noexcept> : type_identity<T> {};
+struct fn_trait<R (T::*)(Args...) const &&> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = true;
+  static constexpr bool is_const      = true;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = false;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) volatile noexcept> : type_identity<T> {};
+struct fn_trait<R (T::*)(Args...) volatile &&> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = true;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = true;
+  static constexpr bool is_noexcept   = false;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) const volatile noexcept> : type_identity<T> {};
+struct fn_trait<R (T::*)(Args...) const volatile &&> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = true;
+  static constexpr bool is_const      = true;
+  static constexpr bool is_volatile   = true;
+  static constexpr bool is_noexcept   = false;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) &> : type_identity<T> {};
+struct fn_trait<R (T::*)(Args...) &&noexcept> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = true;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = true;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) const &> : type_identity<T> {};
+struct fn_trait<R (T::*)(Args...) const &&noexcept> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = true;
+  static constexpr bool is_const      = true;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = true;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) volatile &> : type_identity<T> {};
+struct fn_trait<R (T::*)(Args...) volatile &&noexcept> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = true;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = true;
+  static constexpr bool is_noexcept   = true;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
 template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) const volatile &> : type_identity<T> {};
-template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) &noexcept> : type_identity<T> {};
-template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) const &noexcept> : type_identity<T> {};
-template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) volatile &noexcept> : type_identity<T> {};
-template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) const volatile &noexcept> : type_identity<T> {};
-template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) &&> : type_identity<T> {};
-template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) const &&> : type_identity<T> {};
-template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) volatile &&> : type_identity<T> {};
-template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) const volatile &&> : type_identity<T> {};
-template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) &&noexcept> : type_identity<T> {};
-template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) const &&noexcept> : type_identity<T> {};
-template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) volatile &&noexcept> : type_identity<T> {};
-template <typename R, typename T, typename... Args>
-struct object_type<R (T::*)(Args...) const volatile &&noexcept> : type_identity<T> {};
-template <typename T>
-using object_type_t = typename object_type<T>::type;
+struct fn_trait<R (T::*)(Args...) const volatile &&noexcept> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = true;
+  static constexpr bool is_const      = true;
+  static constexpr bool is_volatile   = true;
+  static constexpr bool is_noexcept   = true;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<Args...>;
+};
+// endregion
 
 namespace detail {
 template <typename T>
@@ -320,243 +400,54 @@ constexpr T &&forward(typename std::remove_reference<T>::type &&t) noexcept {
 }
 
 template <typename T>
-class object_argument_type {
-  using object_t = object_type_t<T>;
+struct mapper {
+private:
+  static constexpr auto is_const    = fn_trait<T>::is_const;
+  static constexpr auto is_volatile = fn_trait<T>::is_volatile;
+  static const auto is_rvalue_ref   = fn_trait<T>::is_rvalue_ref;
+
+  using object_type = typename fn_trait<T>::object_type;
 
 public:
   using type = std::conditional_t<
-      is_cv_v<T>,
-      std::conditional_t<is_rvalue_reference_v<T>,
-                         object_t const volatile &&,
-                         object_t const volatile &>,
+      is_const && is_volatile,
+      std::
+          conditional_t<is_rvalue_ref, object_type const volatile &&, object_type const volatile &>,
       std::conditional_t<
-          is_volatile_v<T>,
-          std::conditional_t<is_rvalue_reference_v<T>, object_t volatile &&, object_t volatile &>,
+          is_volatile,
+          std::conditional_t<is_rvalue_ref, object_type volatile &&, object_type volatile &>,
           std::conditional_t<
-              is_const_v<T>,
-              std::conditional_t<is_rvalue_reference_v<T>, object_t const &&, object_t const &>,
-              std::conditional_t<is_rvalue_reference_v<T>, object_t &&, object_t &>>>>;
+              is_const,
+              std::conditional_t<is_rvalue_ref, object_type const &&, object_type const &>,
+              std::conditional_t<is_rvalue_ref, object_type &&, object_type &>>>>;
 };
 template <typename T>
-using object_argument_type_t = typename object_argument_type<T>::type;
+using mapper_t = typename mapper<T>::type;
 
-template <typename T, type_identity_t<T>>
+template <typename T,
+          T fn,
+          template <typename>
+          class ObjectMapper,
+          bool is_free_fn = fn_trait<T>::is_free_fn,
+          typename Args   = typename fn_trait<T>::arguments>
 struct FnImpl;
-
-// region Free functions
-template <typename R, typename... Args, R (*fn)(Args...)>
-struct FnImpl<R (*)(Args...), fn> {
-  constexpr R operator()(Args... args) const {
-    return fn(river::detail::forward<Args>(args)...);
+template <typename T, T fn, template <typename> class object_mapper, typename... Args>
+struct FnImpl<T, fn, object_mapper, true, type_list<Args...>> {
+  auto operator()(Args... args) const noexcept(fn_trait<T>::is_noexcept) ->
+      typename fn_trait<T>::return_type {
+    return fn(detail::forward<Args>(args)...);
   }
 };
-template <typename R, typename... Args, R (*fn)(Args...) noexcept>
-struct FnImpl<R (*)(Args...) noexcept, fn> {
-  constexpr R operator()(Args... args) const FN_NOEXCEPT {
-    return fn(river::detail::forward<Args>(args)...);
+template <typename T, T fn, template <typename> class object_mapper, typename... Args>
+struct FnImpl<T, fn, object_mapper, false, type_list<Args...>> {
+  auto operator()(object_mapper<T> object, Args... args) const noexcept(fn_trait<T>::is_noexcept) ->
+      typename fn_trait<T>::return_type {
+    return (detail::forward<decltype(object)>(object).*fn)(detail::forward<Args>(args)...);
   }
 };
-// endregion
-
-// region Member functions
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...)>
-struct FnImpl<R (T::*)(Args...), fn> {
-  constexpr R operator()(T &obj, Args... args) const {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-#if FN_ENABLE_OVERLOAD
-  constexpr R operator()(T &&obj, Args... args) const {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-#endif
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const>
-struct FnImpl<R (T::*)(Args...) const, fn> {
-  constexpr R operator()(T const &obj, Args... args) const {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile>
-struct FnImpl<R (T::*)(Args...) volatile, fn> {
-  constexpr R operator()(T volatile &obj, Args... args) const {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-#if FN_ENABLE_OVERLOAD
-  constexpr R operator()(T volatile &&obj, Args... args) const {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-#endif
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile>
-struct FnImpl<R (T::*)(Args...) const volatile, fn> {
-  constexpr R operator()(T const volatile &obj, Args... args) const {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-#if FN_ENABLE_OVERLOAD
-  constexpr R operator()(T const volatile &&obj, Args... args) const {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-#endif
-};
-
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &>
-struct FnImpl<R (T::*)(Args...) &, fn> {
-  constexpr R operator()(T &obj, Args... args) const {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &>
-struct FnImpl<R (T::*)(Args...) const &, fn> {
-  constexpr R operator()(T const &obj, Args... args) const {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile &>
-struct FnImpl<R (T::*)(Args...) volatile &, fn> {
-  constexpr R operator()(T volatile &obj, Args... args) const {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile &>
-struct FnImpl<R (T::*)(Args...) const volatile &, fn> {
-  constexpr R operator()(T const volatile &obj, Args... args) const {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&>
-struct FnImpl<R (T::*)(Args...) &&, fn> {
-  constexpr R operator()(T &&obj, Args... args) const {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &&>
-struct FnImpl<R (T::*)(Args...) const &&, fn> {
-  constexpr R operator()(T const &&obj, Args... args) const {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile &&>
-struct FnImpl<R (T::*)(Args...) volatile &&, fn> {
-  constexpr R operator()(T volatile &&obj, Args... args) const {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile &&>
-struct FnImpl<R (T::*)(Args...) const volatile &&, fn> {
-  constexpr R operator()(T const volatile &&obj, Args... args) const {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) noexcept>
-struct FnImpl<R (T::*)(Args...) noexcept, fn> {
-  constexpr R operator()(T &obj, Args... args) const FN_NOEXCEPT {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-#if FN_ENABLE_OVERLOAD
-  constexpr R operator()(T &&obj, Args... args) const FN_NOEXCEPT {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-#endif
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const noexcept>
-struct FnImpl<R (T::*)(Args...) const noexcept, fn> {
-  constexpr R operator()(T const &obj, Args... args) const FN_NOEXCEPT {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile noexcept>
-struct FnImpl<R (T::*)(Args...) volatile noexcept, fn> {
-  constexpr R operator()(T volatile &obj, Args... args) const FN_NOEXCEPT {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-#if FN_ENABLE_OVERLOAD
-  constexpr R operator()(T volatile &&obj, Args... args) const FN_NOEXCEPT {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-#endif
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile noexcept>
-struct FnImpl<R (T::*)(Args...) const volatile noexcept, fn> {
-  constexpr R operator()(T const volatile &obj, Args... args) const FN_NOEXCEPT {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-#if FN_ENABLE_OVERLOAD
-  constexpr R operator()(T const volatile &&obj, Args... args) const FN_NOEXCEPT {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-#endif
-};
-
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &noexcept>
-struct FnImpl<R (T::*)(Args...) &noexcept, fn> {
-  constexpr R operator()(T &obj, Args... args) const FN_NOEXCEPT {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &noexcept>
-struct FnImpl<R (T::*)(Args...) const &noexcept, fn> {
-  constexpr R operator()(T const &obj, Args... args) const FN_NOEXCEPT {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile &noexcept>
-struct FnImpl<R (T::*)(Args...) volatile &noexcept, fn> {
-  constexpr R operator()(T volatile &obj, Args... args) const FN_NOEXCEPT {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile &noexcept>
-struct FnImpl<R (T::*)(Args...) const volatile &noexcept, fn> {
-  constexpr R operator()(T const volatile &obj, Args... args) const FN_NOEXCEPT {
-    return (obj.*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) &&noexcept>
-struct FnImpl<R (T::*)(Args...) &&noexcept, fn> {
-  constexpr R operator()(T &&obj, Args... args) const FN_NOEXCEPT {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const &&noexcept>
-struct FnImpl<R (T::*)(Args...) const &&noexcept, fn> {
-  constexpr R operator()(T const &&obj, Args... args) const FN_NOEXCEPT {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) volatile &&noexcept>
-struct FnImpl<R (T::*)(Args...) volatile &&noexcept, fn> {
-  constexpr R operator()(T volatile &&obj, Args... args) const FN_NOEXCEPT {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-template <typename R, typename T, typename... Args, R (T::*fn)(Args...) const volatile &&noexcept>
-struct FnImpl<R (T::*)(Args...) const volatile &&noexcept, fn> {
-  constexpr R operator()(T const volatile &&obj, Args... args) const FN_NOEXCEPT {
-    return (river::detail::forward<decltype(obj)>(obj).*fn)(river::detail::forward<Args>(args)...);
-  }
-};
-
-template <typename R, typename T, R(T::*fn)>
-struct FnImpl<std::enable_if_t<!std::is_member_function_pointer_v<R(T::*)>, R(T::*)>, fn> {
-  constexpr R operator()(T const &obj) const {
-    return obj.*fn;
-  }
-#if FN_ENABLE_OVERLOAD
-  constexpr R operator()(T const volatile &obj) const {
-    return obj.*fn;
-  }
-  constexpr R operator()(T const volatile &&obj) const {
-    return obj.*fn;
-  }
-#endif
-};
-// endregion
-
 } // namespace detail
-
-template <auto fp>
-using fn = detail::FnImpl<decltype(fp), fp>;
+template <auto f>
+struct fn : detail::FnImpl<decltype(f), f, detail::mapper_t> {
+  using detail::FnImpl<decltype(f), f, detail::mapper_t>::operator();
+};
 } // namespace river

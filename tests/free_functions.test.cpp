@@ -26,12 +26,6 @@ TEST_CASE("fn of free function pointers can be called with the correct arguments
   CHECK(std::is_same_v<decltype(fn<&fn_with_argument_impl>{}(1)), void>);
 }
 
-TEST_CASE("noexcept should be propagated correctly") {
-  CHECK_FALSE(noexcept(fn<&fn_impl>{}()));
-  CHECK(noexcept(fn<&fn_noexcept_impl>{}()));
-  CHECK_FALSE(noexcept(fn<&fn_with_argument_impl>{}(1)));
-}
-
 TEST_CASE("fn of two different function pointers are different types") {
   CHECK_FALSE(std::is_same_v<fn<&fn_impl>, fn<&diff_fn_impl>>);
 }
