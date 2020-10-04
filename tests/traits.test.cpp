@@ -12,7 +12,9 @@ struct print_type;
 using normal_fn_ptr   = void (*)(int);
 using noexcept_fn_ptr = void (*)(int, long) noexcept;
 
-struct A {};
+struct A {
+  bool a;
+};
 using memfn                   = void (A::*)();
 using const_memfn             = void (A::*)() const;
 using volatile_memfn          = void (A::*)() volatile;

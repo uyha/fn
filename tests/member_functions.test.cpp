@@ -87,6 +87,7 @@ struct A {
 
 TEST_CASE("Member functions can be invoke with the object as its first argument") {
   A lvalue{0};
+  CHECK(fn<&A::a>{}(lvalue) == 0);
   CHECK(fn<&A::fn>{}(lvalue) == 0);
   CHECK(fn<&A::fn_const>{}(lvalue) == 0);
   CHECK(fn<&A::fn_volatile>{}(lvalue) == 0);

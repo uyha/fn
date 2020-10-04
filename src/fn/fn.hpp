@@ -37,26 +37,44 @@ template <typename T>
 struct fn_trait;
 template <typename R, typename... Args>
 struct fn_trait<R (*)(Args...)> {
-  static constexpr bool is_free_fn   = true;
-  static constexpr bool is_member_fn = false;
-  static constexpr bool is_noexcept  = false;
+  static constexpr bool is_free_fn    = true;
+  static constexpr bool is_member_fn  = false;
+  static constexpr bool is_member_ptr = false;
+  static constexpr bool is_noexcept   = false;
 
   using return_type = R;
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename... Args>
 struct fn_trait<R (*)(Args...) noexcept> {
-  static constexpr bool is_free_fn   = true;
-  static constexpr bool is_member_fn = false;
-  static constexpr bool is_noexcept  = true;
+  static constexpr bool is_free_fn    = true;
+  static constexpr bool is_member_fn  = false;
+  static constexpr bool is_member_ptr = false;
+  static constexpr bool is_noexcept   = true;
 
   using return_type = R;
   using arguments   = type_list<Args...>;
+};
+template <typename R, typename T>
+struct fn_trait<R(T::*)> {
+  static constexpr bool is_free_fn    = false;
+  static constexpr bool is_member_fn  = false;
+  static constexpr bool is_member_ptr = true;
+  static constexpr bool is_lvalue_ref = false;
+  static constexpr bool is_rvalue_ref = false;
+  static constexpr bool is_const      = false;
+  static constexpr bool is_volatile   = false;
+  static constexpr bool is_noexcept   = false;
+
+  using return_type = R;
+  using object_type = T;
+  using arguments   = type_list<>;
 };
 template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...)> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = false;
@@ -71,6 +89,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) const> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = true;
@@ -85,6 +104,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) volatile> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = false;
@@ -99,6 +119,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) const volatile> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = true;
@@ -113,6 +134,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = false;
@@ -127,6 +149,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) const noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = true;
@@ -141,6 +164,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) volatile noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = false;
@@ -155,6 +179,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) const volatile noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = true;
@@ -169,6 +194,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) &> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = true;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = false;
@@ -183,6 +209,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) const &> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = true;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = true;
@@ -197,6 +224,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) volatile &> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = true;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = false;
@@ -211,6 +239,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) const volatile &> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = true;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = true;
@@ -225,6 +254,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) &noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = true;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = false;
@@ -239,6 +269,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) const &noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = true;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = true;
@@ -253,6 +284,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) volatile &noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = true;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = false;
@@ -267,6 +299,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) const volatile &noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = true;
   static constexpr bool is_rvalue_ref = false;
   static constexpr bool is_const      = true;
@@ -281,6 +314,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) &&> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = true;
   static constexpr bool is_const      = false;
@@ -295,6 +329,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) const &&> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = true;
   static constexpr bool is_const      = true;
@@ -309,6 +344,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) volatile &&> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = true;
   static constexpr bool is_const      = false;
@@ -323,6 +359,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) const volatile &&> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = true;
   static constexpr bool is_const      = true;
@@ -337,6 +374,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) &&noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = true;
   static constexpr bool is_const      = false;
@@ -351,6 +389,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) const &&noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = true;
   static constexpr bool is_const      = true;
@@ -365,6 +404,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) volatile &&noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = true;
   static constexpr bool is_const      = false;
@@ -379,6 +419,7 @@ template <typename R, typename T, typename... Args>
 struct fn_trait<R (T::*)(Args...) const volatile &&noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
+  static constexpr bool is_member_ptr = false;
   static constexpr bool is_lvalue_ref = false;
   static constexpr bool is_rvalue_ref = true;
   static constexpr bool is_const      = true;
@@ -431,21 +472,28 @@ template <typename T,
           T fn,
           template <typename>
           class mapper,
-          bool is_free_fn = fn_trait<T>::is_free_fn,
-          typename Args   = typename fn_trait<T>::arguments>
+          bool is_free_fn    = fn_trait<T>::is_free_fn,
+          bool is_member_ptr = fn_trait<T>::is_member_ptr,
+          typename Args      = typename fn_trait<T>::arguments>
 struct FnImpl;
-template <typename T, T fn, template <typename> class object_mapper, typename... Args>
-struct FnImpl<T, fn, object_mapper, true, type_list<Args...>> {
+template <typename T, T fn, typename... Args>
+struct FnImpl<T, fn, /*dummy*/ simple_mapper_t, true, false, type_list<Args...>> {
   auto operator()(Args... args) const noexcept(fn_trait<T>::is_noexcept) ->
       typename fn_trait<T>::return_type {
     return fn(detail::forward<Args>(args)...);
   }
 };
-template <typename T, T fn, template <typename> class object_mapper, typename... Args>
-struct FnImpl<T, fn, object_mapper, false, type_list<Args...>> {
-  auto operator()(object_mapper<T> object, Args... args) const noexcept(fn_trait<T>::is_noexcept) ->
-      typename fn_trait<T>::return_type {
+template <typename T, T fn, template <typename> class object_mapper_t, typename... Args>
+struct FnImpl<T, fn, object_mapper_t, false, false, type_list<Args...>> {
+  auto operator()(object_mapper_t<T> object, Args... args) const noexcept(fn_trait<T>::is_noexcept)
+      -> typename fn_trait<T>::return_type {
     return (detail::forward<decltype(object)>(object).*fn)(detail::forward<Args>(args)...);
+  }
+};
+template <typename T, T fn, template <typename> class object_mapper_t>
+struct FnImpl<T, fn, object_mapper_t, false, true, type_list<>> {
+  auto operator()(object_mapper_t<T> object) const noexcept -> decltype(object.*fn) {
+    return object.*fn;
   }
 };
 } // namespace detail
