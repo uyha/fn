@@ -403,7 +403,7 @@ constexpr T &&forward(typename std::remove_reference<T>::type &&t) noexcept {
 }
 
 template <typename T>
-struct mapper {
+struct simple_mapper {
 private:
   static constexpr auto is_const    = fn_trait<T>::is_const;
   static constexpr auto is_volatile = fn_trait<T>::is_volatile;
@@ -425,7 +425,7 @@ public:
               std::conditional_t<is_rvalue_ref, object_type &&, object_type &>>>>;
 };
 template <typename T>
-using mapper_t = typename mapper<T>::type;
+using simple_mapper_t = typename simple_mapper<T>::type;
 
 template <typename T,
           T fn,
@@ -449,8 +449,12 @@ struct FnImpl<T, fn, object_mapper, false, type_list<Args...>> {
   }
 };
 } // namespace detail
+template <auto f, template <typename> class... mappers_t>
+struct overloading_fn : detail::FnImpl<decltype(f), f, mappers_t>... {
+  using detail::FnImpl<decltype(f), f, mappers_t>::operator()...;
+};
 template <auto f>
-struct fn : detail::FnImpl<decltype(f), f, detail::mapper_t> {
-  using detail::FnImpl<decltype(f), f, detail::mapper_t>::operator();
+struct fn : detail::FnImpl<decltype(f), f, detail::simple_mapper_t> {
+  using detail::FnImpl<decltype(f), f, detail::simple_mapper_t>::operator();
 };
 } // namespace river
