@@ -236,6 +236,33 @@ TEST_CASE("is_volatile should indicate if a member is volatile qualified") {
   CHECK_FALSE(is_volatile_v<rvalue_noexcept_const_memfn>);
 }
 
+TEST_CASE("remove_cv should return the same signature with cv qualifiers") {
+  CHECK(std::is_same_v<remove_cv_t<memfn>, memfn>);
+  CHECK(std::is_same_v<remove_cv_t<const_memfn>, memfn>);
+  CHECK(std::is_same_v<remove_cv_t<volatile_memfn>, memfn>);
+  CHECK(std::is_same_v<remove_cv_t<cv_memfn>, memfn>);
+  CHECK(std::is_same_v<remove_cv_t<noexcept_memfn>, noexcept_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<noexcept_const_memfn>, noexcept_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<noexcept_volatile_memfn>, noexcept_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<noexcept_cv_memfn>, noexcept_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<lvalue_memfn>, lvalue_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<lvalue_const_memfn>, lvalue_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<lvalue_volatile_memfn>, lvalue_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<lvalue_cv_memfn>, lvalue_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<lvalue_noexcept_memfn>, lvalue_noexcept_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<lvalue_noexcept_const_memfn>, lvalue_noexcept_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<lvalue_noexcept_volatile_memfn>, lvalue_noexcept_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<lvalue_noexcept_cv_memfn>, lvalue_noexcept_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<rvalue_memfn>, rvalue_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<rvalue_const_memfn>, rvalue_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<rvalue_volatile_memfn>, rvalue_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<rvalue_cv_memfn>, rvalue_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<rvalue_noexcept_memfn>, rvalue_noexcept_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<rvalue_noexcept_const_memfn>, rvalue_noexcept_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<rvalue_noexcept_volatile_memfn>, rvalue_noexcept_memfn>);
+  CHECK(std::is_same_v<remove_cv_t<rvalue_noexcept_cv_memfn>, rvalue_noexcept_memfn>);
+}
+
 TEST_CASE(
     "remove_lvalue_reference should return the same signature with no lvalue reference specifier") {
   CHECK(std::is_same_v<remove_lvalue_reference_t<lvalue_memfn>, memfn>);
@@ -389,4 +416,33 @@ TEST_CASE("object_type should return A for the member functions of A") {
   CHECK(std::is_same_v<object_type_t<rvalue_noexcept_const_memfn>, A>);
   CHECK(std::is_same_v<object_type_t<rvalue_noexcept_volatile_memfn>, A>);
   CHECK(std::is_same_v<object_type_t<rvalue_noexcept_cv_memfn>, A>);
+}
+
+TEST_CASE(
+    "object_argument_type should return the argument type to be used as the first argument of fn") {
+  using namespace detail;
+  CHECK(std::is_same_v<object_argument_type_t<memfn>, A &>);
+  CHECK(std::is_same_v<object_argument_type_t<const_memfn>, A const &>);
+  CHECK(std::is_same_v<object_argument_type_t<volatile_memfn>, A volatile &>);
+  CHECK(std::is_same_v<object_argument_type_t<cv_memfn>, A const volatile &>);
+  CHECK(std::is_same_v<object_argument_type_t<noexcept_memfn>, A &>);
+  CHECK(std::is_same_v<object_argument_type_t<noexcept_const_memfn>, A const &>);
+  CHECK(std::is_same_v<object_argument_type_t<noexcept_volatile_memfn>, A volatile &>);
+  CHECK(std::is_same_v<object_argument_type_t<noexcept_cv_memfn>, A const volatile &>);
+  CHECK(std::is_same_v<object_argument_type_t<lvalue_memfn>, A &>);
+  CHECK(std::is_same_v<object_argument_type_t<lvalue_const_memfn>, A const &>);
+  CHECK(std::is_same_v<object_argument_type_t<lvalue_volatile_memfn>, A volatile &>);
+  CHECK(std::is_same_v<object_argument_type_t<lvalue_cv_memfn>, A const volatile &>);
+  CHECK(std::is_same_v<object_argument_type_t<lvalue_noexcept_memfn>, A &>);
+  CHECK(std::is_same_v<object_argument_type_t<lvalue_noexcept_const_memfn>, A const &>);
+  CHECK(std::is_same_v<object_argument_type_t<lvalue_noexcept_volatile_memfn>, A volatile &>);
+  CHECK(std::is_same_v<object_argument_type_t<lvalue_noexcept_cv_memfn>, A const volatile &>);
+  CHECK(std::is_same_v<object_argument_type_t<rvalue_memfn>, A &&>);
+  CHECK(std::is_same_v<object_argument_type_t<rvalue_const_memfn>, A const &&>);
+  CHECK(std::is_same_v<object_argument_type_t<rvalue_volatile_memfn>, A volatile &&>);
+  CHECK(std::is_same_v<object_argument_type_t<rvalue_cv_memfn>, A const volatile &&>);
+  CHECK(std::is_same_v<object_argument_type_t<rvalue_noexcept_memfn>, A &&>);
+  CHECK(std::is_same_v<object_argument_type_t<rvalue_noexcept_const_memfn>, A const &&>);
+  CHECK(std::is_same_v<object_argument_type_t<rvalue_noexcept_volatile_memfn>, A volatile &&>);
+  CHECK(std::is_same_v<object_argument_type_t<rvalue_noexcept_cv_memfn>, A const volatile &&>);
 }

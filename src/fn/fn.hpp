@@ -182,7 +182,7 @@ struct remove_cv : remove_const<remove_volatile_t<T>> {};
 template <typename T>
 using remove_cv_t = typename remove_cv<T>::type;
 template <typename T>
-struct is_cv : std::bool_constant<!std::is_same_v<remove_cv_t<T>, T>> {};
+struct is_cv : std::bool_constant<is_const_v<T> && is_volatile_v<T>> {};
 template <typename T>
 constexpr bool is_cv_v = is_cv<T>::value;
 
@@ -318,6 +318,27 @@ constexpr T &&forward(typename std::remove_reference<T>::type &&t) noexcept {
   static_assert(!std::is_lvalue_reference_v<T>);
   return static_cast<T &&>(t);
 }
+
+template <typename T>
+class object_argument_type {
+  using object_t = object_type_t<T>;
+
+public:
+  using type = std::conditional_t<
+      is_cv_v<T>,
+      std::conditional_t<is_rvalue_reference_v<T>,
+                         object_t const volatile &&,
+                         object_t const volatile &>,
+      std::conditional_t<
+          is_volatile_v<T>,
+          std::conditional_t<is_rvalue_reference_v<T>, object_t volatile &&, object_t volatile &>,
+          std::conditional_t<
+              is_const_v<T>,
+              std::conditional_t<is_rvalue_reference_v<T>, object_t const &&, object_t const &>,
+              std::conditional_t<is_rvalue_reference_v<T>, object_t &&, object_t &>>>>;
+};
+template <typename T>
+using object_argument_type_t = typename object_argument_type<T>::type;
 
 template <typename T, type_identity_t<T>>
 struct FnImpl;
