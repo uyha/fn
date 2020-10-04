@@ -427,7 +427,7 @@ using mapper_t = typename mapper<T>::type;
 template <typename T,
           T fn,
           template <typename>
-          class ObjectMapper,
+          class mapper,
           bool is_free_fn = fn_trait<T>::is_free_fn,
           typename Args   = typename fn_trait<T>::arguments>
 struct FnImpl;
