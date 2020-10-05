@@ -14,7 +14,7 @@ convenient syntax.
 void function() {}
 
 struct A {
-  int function(){};
+  void function(){};
 
   int a{0};
 };
