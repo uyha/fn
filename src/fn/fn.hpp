@@ -446,23 +446,21 @@ constexpr T &&forward(typename std::remove_reference<T>::type &&t) noexcept {
 }
 
 template <typename T>
-struct type_identity {
-  using type = T;
-};
+using lvalue_ref_t = typename fn_trait<T>::object_type &;
 template <typename T>
-using type_identity_t = typename type_identity<T>::type;
+using const_lvalue_ref_t = typename fn_trait<T>::object_type const &;
 template <typename T>
-using add_const_lvalue_ref_t = std::add_lvalue_reference_t<std::add_const_t<T>>;
+using volatile_lvalue_ref_t = typename fn_trait<T>::object_type volatile &;
 template <typename T>
-using add_volatile_lvalue_ref_t = std::add_lvalue_reference_t<std::add_volatile_t<T>>;
+using cv_lvalue_ref_t = typename fn_trait<T>::object_type const volatile &;
 template <typename T>
-using add_cv_lvalue_ref_t = std::add_lvalue_reference_t<std::add_cv_t<T>>;
+using rvalue_ref_t = typename fn_trait<T>::object_type &&;
 template <typename T>
-using add_const_rvalue_ref_t = std::add_rvalue_reference_t<std::add_const_t<T>>;
+using const_rvalue_ref_t = typename fn_trait<T>::object_type const &&;
 template <typename T>
-using add_volatile_rvalue_ref_t = std::add_rvalue_reference_t<std::add_volatile_t<T>>;
+using volatile_rvalue_ref_t = typename fn_trait<T>::object_type volatile &&;
 template <typename T>
-using add_cv_rvalue_ref_t = std::add_rvalue_reference_t<std::add_cv_t<T>>;
+using cv_rvalue_ref_t = typename fn_trait<T>::object_type const volatile &&;
 
 template <typename T>
 struct simple_mapper {
@@ -487,7 +485,7 @@ public:
 template <typename T>
 using simple_mapper_t = typename simple_mapper<T>::type;
 
-template <typename T, bool is_free_fn = fn_trait<T>::is_free_fn, bool is_member_fn = fn_trait<T>::is_member_fn>
+template <typename T, bool is_free_fn = fn_trait<T>::is_free_fn, bool is_member_ptr = fn_trait<T>::is_member_ptr>
 struct overloading_mappers;
 template <typename T>
 struct overloading_mappers<T, true, false> {
@@ -499,18 +497,14 @@ struct overloading_mappers<T, false, false> {
 };
 template <typename T>
 struct overloading_mappers<T, false, true> {
-  using type = higher_order_type_list<type_identity_t,
-                                      std::add_const_t,
-                                      std::add_volatile_t,
-                                      std::add_cv_t,
-                                      std::add_lvalue_reference_t,
-                                      add_const_lvalue_ref_t,
-                                      add_volatile_lvalue_ref_t,
-                                      add_cv_lvalue_ref_t,
-                                      std::add_rvalue_reference_t,
-                                      add_const_rvalue_ref_t,
-                                      add_volatile_rvalue_ref_t,
-                                      add_cv_rvalue_ref_t>;
+  using type = higher_order_type_list<lvalue_ref_t,
+                                      const_lvalue_ref_t,
+                                      volatile_lvalue_ref_t,
+                                      cv_lvalue_ref_t,
+                                      rvalue_ref_t,
+                                      const_rvalue_ref_t,
+                                      volatile_rvalue_ref_t,
+                                      cv_rvalue_ref_t>;
 };
 
 template <typename T>
@@ -560,8 +554,8 @@ struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, false, false
     : SingleFnImpl<T, fn, mappers, false, false, type_list<Args...>>... {
   using SingleFnImpl<T, fn, mappers, false, false, type_list<Args...>>::operator()...;
 };
-template <typename T, T fn, template <typename> class... mappers, typename... Args>
-struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, false, true, type_list<Args...>>
+template <typename T, T fn, template <typename> class... mappers>
+struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, false, true, type_list<>>
     : SingleFnImpl<T, fn, mappers, false, true, type_list<>>... {
   using SingleFnImpl<T, fn, mappers, false, true, type_list<>>::operator()...;
 };

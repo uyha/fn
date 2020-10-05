@@ -6,6 +6,9 @@
 
 using namespace river;
 
+template <typename...>
+struct print_types;
+
 struct A {
   int a;
 
@@ -85,9 +88,23 @@ struct A {
   }
 };
 
+TEST_CASE("Member pointer can be call with any type of object when using overloading_fn") {
+  A lvalue{0};
+  A const const_lvalue{0};
+  A volatile volatile_lvalue{0};
+  A const volatile cv_lvalue{0};
+  CHECK(overloading_fn<&A::a>{}(lvalue) == 0);
+  CHECK(overloading_fn<&A::a>{}(const_lvalue) == 0);
+  CHECK(overloading_fn<&A::a>{}(volatile_lvalue) == 0);
+  CHECK(overloading_fn<&A::a>{}(cv_lvalue) == 0);
+  CHECK(overloading_fn<&A::a>{}(std::move(lvalue)) == 0);
+  CHECK(overloading_fn<&A::a>{}(std::move(const_lvalue)) == 0);
+  CHECK(overloading_fn<&A::a>{}(std::move(volatile_lvalue)) == 0);
+  CHECK(overloading_fn<&A::a>{}(std::move(cv_lvalue)) == 0);
+}
+
 TEST_CASE("Member functions can be invoke with the object as its first argument") {
   A lvalue{0};
-  CHECK(fn<&A::a>{}(lvalue) == 0);
   CHECK(fn<&A::fn>{}(lvalue) == 0);
   CHECK(fn<&A::fn_const>{}(lvalue) == 0);
   CHECK(fn<&A::fn_volatile>{}(lvalue) == 0);
