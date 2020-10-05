@@ -349,3 +349,62 @@ TEST_CASE("noexcept should be propagated correctly") {
 
   CHECK(noexcept(fn<&A::rvalue_fn_const_volatile_noexcept>{}(std::move(const_volatile_lvalue))));
 }
+
+TEST_CASE("noexcept should be propagated") {
+  A lvalue{0};
+  A const const_lvalue{0};
+  A volatile volatile_lvalue{0};
+  A const volatile cv_lvalue{0};
+
+  CHECK(noexcept(fn<&A::fn_noexcept>{}(lvalue)));
+  CHECK(noexcept(fn<&A::fn_const_noexcept>{}(lvalue)));
+  CHECK(noexcept(fn<&A::fn_volatile_noexcept>{}(lvalue)));
+  CHECK(noexcept(fn<&A::fn_const_volatile_noexcept>{}(lvalue)));
+  CHECK(noexcept(fn<&A::lvalue_fn_noexcept>{}(lvalue)));
+  CHECK(noexcept(fn<&A::lvalue_fn_const_noexcept>{}(lvalue)));
+  CHECK(noexcept(fn<&A::lvalue_fn_volatile_noexcept>{}(lvalue)));
+  CHECK(noexcept(fn<&A::lvalue_fn_const_volatile_noexcept>{}(lvalue)));
+  CHECK(noexcept(fn<&A::rvalue_fn_noexcept>{}(std::move(lvalue))));
+  CHECK(noexcept(fn<&A::rvalue_fn_const_noexcept>{}(std::move(lvalue))));
+  CHECK(noexcept(fn<&A::rvalue_fn_volatile_noexcept>{}(std::move(lvalue))));
+  CHECK(noexcept(fn<&A::rvalue_fn_const_volatile_noexcept>{}(std::move(lvalue))));
+
+  CHECK_FALSE(noexcept(fn<&A::fn>{}(lvalue)));
+  CHECK_FALSE(noexcept(fn<&A::fn_const>{}(lvalue)));
+  CHECK_FALSE(noexcept(fn<&A::fn_volatile>{}(lvalue)));
+  CHECK_FALSE(noexcept(fn<&A::fn_const_volatile>{}(lvalue)));
+  CHECK_FALSE(noexcept(fn<&A::lvalue_fn>{}(lvalue)));
+  CHECK_FALSE(noexcept(fn<&A::lvalue_fn_const>{}(lvalue)));
+  CHECK_FALSE(noexcept(fn<&A::lvalue_fn_volatile>{}(lvalue)));
+  CHECK_FALSE(noexcept(fn<&A::lvalue_fn_const_volatile>{}(lvalue)));
+  CHECK_FALSE(noexcept(fn<&A::rvalue_fn>{}(std::move(lvalue))));
+  CHECK_FALSE(noexcept(fn<&A::rvalue_fn_const>{}(std::move(lvalue))));
+  CHECK_FALSE(noexcept(fn<&A::rvalue_fn_volatile>{}(std::move(lvalue))));
+  CHECK_FALSE(noexcept(fn<&A::rvalue_fn_const_volatile>{}(std::move(lvalue))));
+
+  CHECK(noexcept(overloading_fn<&A::fn_noexcept>{}(lvalue)));
+  CHECK(noexcept(overloading_fn<&A::fn_const_noexcept>{}(lvalue)));
+  CHECK(noexcept(overloading_fn<&A::fn_volatile_noexcept>{}(lvalue)));
+  CHECK(noexcept(overloading_fn<&A::fn_const_volatile_noexcept>{}(lvalue)));
+  CHECK(noexcept(overloading_fn<&A::lvalue_fn_noexcept>{}(lvalue)));
+  CHECK(noexcept(overloading_fn<&A::lvalue_fn_const_noexcept>{}(lvalue)));
+  CHECK(noexcept(overloading_fn<&A::lvalue_fn_volatile_noexcept>{}(lvalue)));
+  CHECK(noexcept(overloading_fn<&A::lvalue_fn_const_volatile_noexcept>{}(lvalue)));
+  CHECK(noexcept(overloading_fn<&A::rvalue_fn_noexcept>{}(std::move(lvalue))));
+  CHECK(noexcept(overloading_fn<&A::rvalue_fn_const_noexcept>{}(std::move(lvalue))));
+  CHECK(noexcept(overloading_fn<&A::rvalue_fn_volatile_noexcept>{}(std::move(lvalue))));
+  CHECK(noexcept(overloading_fn<&A::rvalue_fn_const_volatile_noexcept>{}(std::move(lvalue))));
+
+  CHECK_FALSE(noexcept(overloading_fn<&A::fn>{}(lvalue)));
+  CHECK_FALSE(noexcept(overloading_fn<&A::fn_const>{}(lvalue)));
+  CHECK_FALSE(noexcept(overloading_fn<&A::fn_volatile>{}(lvalue)));
+  CHECK_FALSE(noexcept(overloading_fn<&A::fn_const_volatile>{}(lvalue)));
+  CHECK_FALSE(noexcept(overloading_fn<&A::lvalue_fn>{}(lvalue)));
+  CHECK_FALSE(noexcept(overloading_fn<&A::lvalue_fn_const>{}(lvalue)));
+  CHECK_FALSE(noexcept(overloading_fn<&A::lvalue_fn_volatile>{}(lvalue)));
+  CHECK_FALSE(noexcept(overloading_fn<&A::lvalue_fn_const_volatile>{}(lvalue)));
+  CHECK_FALSE(noexcept(overloading_fn<&A::rvalue_fn>{}(std::move(lvalue))));
+  CHECK_FALSE(noexcept(overloading_fn<&A::rvalue_fn_const>{}(std::move(lvalue))));
+  CHECK_FALSE(noexcept(overloading_fn<&A::rvalue_fn_volatile>{}(std::move(lvalue))));
+  CHECK_FALSE(noexcept(overloading_fn<&A::rvalue_fn_const_volatile>{}(std::move(lvalue))));
+}
