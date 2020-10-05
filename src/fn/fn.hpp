@@ -553,19 +553,20 @@ template <typename T,
 struct SingleFnImpl;
 template <typename T, T fn, typename... Args>
 struct SingleFnImpl<T, fn, /*dummy*/ simple_mapper_t, true, false, type_list<Args...>> {
-  auto operator()(Args... args) const noexcept(fn_trait<T>::is_noexcept) -> decltype(auto) {
+  constexpr auto operator()(Args... args) const noexcept(fn_trait<T>::is_noexcept) -> decltype(auto) {
     return fn(detail::forward<Args>(args)...);
   }
 };
 template <typename T, T fn, template <typename> class object_mapper_t, typename... Args>
 struct SingleFnImpl<T, fn, object_mapper_t, false, false, type_list<Args...>> {
-  auto operator()(object_mapper_t<T> object, Args... args) const noexcept(fn_trait<T>::is_noexcept) -> decltype(auto) {
+  constexpr auto operator()(object_mapper_t<T> object, Args... args) const noexcept(fn_trait<T>::is_noexcept)
+      -> decltype(auto) {
     return (detail::forward<decltype(object)>(object).*fn)(detail::forward<Args>(args)...);
   }
 };
 template <typename T, T fn, template <typename> class object_mapper_t>
 struct SingleFnImpl<T, fn, object_mapper_t, false, true, type_list<>> {
-  auto operator()(object_mapper_t<T> object) const noexcept -> decltype(auto) {
+  constexpr auto operator()(object_mapper_t<T> object) const noexcept -> decltype(auto) {
     return object.*fn;
   }
 };
