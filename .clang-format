@@ -9,6 +9,6 @@ BinPackParameters: false
 BreakBeforeBinaryOperators: NonAssignment
 BreakConstructorInitializers: BeforeComma
 BreakInheritanceList: BeforeComma
-ColumnLimit: 100
+ColumnLimit: 120
 IncludeBlocks: Regroup
 KeepEmptyLinesAtTheStartOfBlocks: false
