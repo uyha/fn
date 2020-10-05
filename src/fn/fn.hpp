@@ -493,7 +493,39 @@ struct overloading_mappers<T, true, false> {
 };
 template <typename T>
 struct overloading_mappers<T, false, false> {
-  using type = type_list<>;
+private:
+  static constexpr auto is_const    = fn_trait<T>::is_const;
+  static constexpr auto is_volatile = fn_trait<T>::is_volatile;
+  static const auto is_rvalue_ref   = fn_trait<T>::is_rvalue_ref;
+  static const auto is_lvalue_ref   = fn_trait<T>::is_lvalue_ref;
+
+public:
+  using type = std::conditional_t<
+      is_const && is_volatile,
+      std::conditional_t<is_rvalue_ref,
+                         higher_order_type_list<cv_rvalue_ref_t>,
+                         std::conditional_t<is_lvalue_ref,
+                                            higher_order_type_list<cv_lvalue_ref_t>,
+                                            higher_order_type_list<cv_lvalue_ref_t, cv_rvalue_ref_t>>>,
+      std::conditional_t<
+          is_volatile,
+          std::conditional_t<is_rvalue_ref,
+                             higher_order_type_list<volatile_rvalue_ref_t>,
+                             std::conditional_t<is_lvalue_ref,
+                                                higher_order_type_list<volatile_lvalue_ref_t>,
+                                                higher_order_type_list<volatile_lvalue_ref_t, volatile_rvalue_ref_t>>>,
+          std::conditional_t<
+              is_const,
+              std::conditional_t<is_rvalue_ref,
+                                 higher_order_type_list<const_rvalue_ref_t>,
+                                 std::conditional_t<is_lvalue_ref,
+                                                    higher_order_type_list<const_lvalue_ref_t>,
+                                                    higher_order_type_list<const_lvalue_ref_t, const_rvalue_ref_t>>>,
+              std::conditional_t<is_rvalue_ref,
+                                 higher_order_type_list<rvalue_ref_t>,
+                                 std::conditional_t<is_lvalue_ref,
+                                                    higher_order_type_list<lvalue_ref_t>,
+                                                    higher_order_type_list<lvalue_ref_t, rvalue_ref_t>>>>>>;
 };
 template <typename T>
 struct overloading_mappers<T, false, true> {
