@@ -6,6 +6,7 @@ project("fn"
 
 set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
 
+add_subdirectory(examples)
 add_subdirectory(external)
 add_subdirectory(src)
 add_subdirectory(tests)
