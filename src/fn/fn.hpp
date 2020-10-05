@@ -31,6 +31,8 @@
 namespace river {
 template <typename... Ts>
 struct type_list {};
+template <template <typename...> class... Ts>
+struct higher_order_type_list {};
 
 // region fn_trait
 template <typename T>
@@ -444,6 +446,25 @@ constexpr T &&forward(typename std::remove_reference<T>::type &&t) noexcept {
 }
 
 template <typename T>
+struct type_identity {
+  using type = T;
+};
+template <typename T>
+using type_identity_t = typename type_identity<T>::type;
+template <typename T>
+using add_const_lvalue_ref_t = std::add_lvalue_reference_t<std::add_const_t<T>>;
+template <typename T>
+using add_volatile_lvalue_ref_t = std::add_lvalue_reference_t<std::add_volatile_t<T>>;
+template <typename T>
+using add_cv_lvalue_ref_t = std::add_lvalue_reference_t<std::add_cv_t<T>>;
+template <typename T>
+using add_const_rvalue_ref_t = std::add_rvalue_reference_t<std::add_const_t<T>>;
+template <typename T>
+using add_volatile_rvalue_ref_t = std::add_rvalue_reference_t<std::add_volatile_t<T>>;
+template <typename T>
+using add_cv_rvalue_ref_t = std::add_rvalue_reference_t<std::add_cv_t<T>>;
+
+template <typename T>
 struct simple_mapper {
 private:
   static constexpr auto is_const    = fn_trait<T>::is_const;
@@ -455,18 +476,45 @@ private:
 public:
   using type = std::conditional_t<
       is_const && is_volatile,
-      std::
-          conditional_t<is_rvalue_ref, object_type const volatile &&, object_type const volatile &>,
+      std::conditional_t<is_rvalue_ref, object_type const volatile &&, object_type const volatile &>,
       std::conditional_t<
           is_volatile,
           std::conditional_t<is_rvalue_ref, object_type volatile &&, object_type volatile &>,
-          std::conditional_t<
-              is_const,
-              std::conditional_t<is_rvalue_ref, object_type const &&, object_type const &>,
-              std::conditional_t<is_rvalue_ref, object_type &&, object_type &>>>>;
+          std::conditional_t<is_const,
+                             std::conditional_t<is_rvalue_ref, object_type const &&, object_type const &>,
+                             std::conditional_t<is_rvalue_ref, object_type &&, object_type &>>>>;
 };
 template <typename T>
 using simple_mapper_t = typename simple_mapper<T>::type;
+
+template <typename T, bool is_free_fn = fn_trait<T>::is_free_fn, bool is_member_fn = fn_trait<T>::is_member_fn>
+struct overloading_mappers;
+template <typename T>
+struct overloading_mappers<T, true, false> {
+  using type = type_list<>;
+};
+template <typename T>
+struct overloading_mappers<T, false, false> {
+  using type = type_list<>;
+};
+template <typename T>
+struct overloading_mappers<T, false, true> {
+  using type = higher_order_type_list<type_identity_t,
+                                      std::add_const_t,
+                                      std::add_volatile_t,
+                                      std::add_cv_t,
+                                      std::add_lvalue_reference_t,
+                                      add_const_lvalue_ref_t,
+                                      add_volatile_lvalue_ref_t,
+                                      add_cv_lvalue_ref_t,
+                                      std::add_rvalue_reference_t,
+                                      add_const_rvalue_ref_t,
+                                      add_volatile_rvalue_ref_t,
+                                      add_cv_rvalue_ref_t>;
+};
+
+template <typename T>
+using overloading_mappers_t = typename overloading_mappers<T>::type;
 
 template <typename T,
           T fn,
@@ -475,34 +523,56 @@ template <typename T,
           bool is_free_fn    = fn_trait<T>::is_free_fn,
           bool is_member_ptr = fn_trait<T>::is_member_ptr,
           typename Args      = typename fn_trait<T>::arguments>
-struct FnImpl;
+struct SingleFnImpl;
 template <typename T, T fn, typename... Args>
-struct FnImpl<T, fn, /*dummy*/ simple_mapper_t, true, false, type_list<Args...>> {
-  auto operator()(Args... args) const noexcept(fn_trait<T>::is_noexcept) ->
-      typename fn_trait<T>::return_type {
+struct SingleFnImpl<T, fn, /*dummy*/ simple_mapper_t, true, false, type_list<Args...>> {
+  auto operator()(Args... args) const noexcept(fn_trait<T>::is_noexcept) -> decltype(auto) {
     return fn(detail::forward<Args>(args)...);
   }
 };
 template <typename T, T fn, template <typename> class object_mapper_t, typename... Args>
-struct FnImpl<T, fn, object_mapper_t, false, false, type_list<Args...>> {
-  auto operator()(object_mapper_t<T> object, Args... args) const noexcept(fn_trait<T>::is_noexcept)
-      -> typename fn_trait<T>::return_type {
+struct SingleFnImpl<T, fn, object_mapper_t, false, false, type_list<Args...>> {
+  auto operator()(object_mapper_t<T> object, Args... args) const noexcept(fn_trait<T>::is_noexcept) -> decltype(auto) {
     return (detail::forward<decltype(object)>(object).*fn)(detail::forward<Args>(args)...);
   }
 };
 template <typename T, T fn, template <typename> class object_mapper_t>
-struct FnImpl<T, fn, object_mapper_t, false, true, type_list<>> {
-  auto operator()(object_mapper_t<T> object) const noexcept -> decltype(object.*fn) {
+struct SingleFnImpl<T, fn, object_mapper_t, false, true, type_list<>> {
+  auto operator()(object_mapper_t<T> object) const noexcept -> decltype(auto) {
     return object.*fn;
   }
 };
+
+template <typename T,
+          T fn,
+          typename mappers   = overloading_mappers_t<T>,
+          bool is_free_fn    = fn_trait<T>::is_free_fn,
+          bool is_member_ptr = fn_trait<T>::is_member_ptr,
+          typename Args      = typename fn_trait<T>::arguments>
+struct OverloadingFnImpl;
+template <typename T, T fn, typename... Args>
+struct OverloadingFnImpl<T, fn, type_list<>, true, false, type_list<Args...>>
+    : SingleFnImpl<T, fn, /*dummy*/ simple_mapper_t, true, false, type_list<Args...>> {
+  using SingleFnImpl<T, fn, simple_mapper_t, true, false, type_list<Args...>>::operator();
+};
+template <typename T, T fn, template <typename> class... mappers, typename... Args>
+struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, false, false, type_list<Args...>>
+    : SingleFnImpl<T, fn, mappers, false, false, type_list<Args...>>... {
+  using SingleFnImpl<T, fn, mappers, false, false, type_list<Args...>>::operator()...;
+};
+template <typename T, T fn, template <typename> class... mappers, typename... Args>
+struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, false, true, type_list<Args...>>
+    : SingleFnImpl<T, fn, mappers, false, true, type_list<>>... {
+  using SingleFnImpl<T, fn, mappers, false, true, type_list<>>::operator()...;
+};
+
 } // namespace detail
-template <auto f, template <typename> class... mappers_t>
-struct overloading_fn : detail::FnImpl<decltype(f), f, mappers_t>... {
-  using detail::FnImpl<decltype(f), f, mappers_t>::operator()...;
+template <auto f>
+struct fn : detail::SingleFnImpl<decltype(f), f, detail::simple_mapper_t> {
+  using detail::SingleFnImpl<decltype(f), f, detail::simple_mapper_t>::operator();
 };
 template <auto f>
-struct fn : detail::FnImpl<decltype(f), f, detail::simple_mapper_t> {
-  using detail::FnImpl<decltype(f), f, detail::simple_mapper_t>::operator();
+struct overloading_fn : detail::OverloadingFnImpl<decltype(f), f> {
+  using detail::OverloadingFnImpl<decltype(f), f>::operator();
 };
 } // namespace river

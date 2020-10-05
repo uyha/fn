@@ -24,6 +24,10 @@ TEST_CASE("fn of free function pointers can be called with the correct arguments
   CHECK(fn<&fn_impl>{}() == 1);
   CHECK(fn<&fn_noexcept_impl>{}() == 1);
   CHECK(std::is_same_v<decltype(fn<&fn_with_argument_impl>{}(1)), void>);
+
+  CHECK(overloading_fn<&fn_impl>{}() == 1);
+  CHECK(overloading_fn<&fn_noexcept_impl>{}() == 1);
+  CHECK(std::is_same_v<decltype(overloading_fn<&fn_with_argument_impl>{}(1)), void>);
 }
 
 TEST_CASE("fn of two different function pointers are different types") {
