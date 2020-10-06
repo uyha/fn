@@ -4,7 +4,7 @@
 This library provides a trait for querying information about a function pointer type, whether it is free function 
 pointer, a member function pointer, noexcept, etc. It also provides a thin wrapper that turns (member) function 
 pointers into individual types. It is intended make (member) function pointers behave like lambda but with a more 
-convenient syntax.
+convenient syntax. **C**'s variadic function pointers are not supported.
 
 ## Quickstart
 ```cpp
@@ -68,6 +68,6 @@ If you need an object that can be called with all the possible valid arguments, 
 instead.
 
 ## Usage
-This is a header only library, just copy `fn.hpp` to your project and start using it.
+This is a header only library, just copy `fn.hpp` to your project and start using it. This library requires C++17.
 
 [sml]: https://github.com/boost-ext/sml
