@@ -2,12 +2,12 @@
 // Created by uyha on 23.09.2020.
 //
 #include <catch2/catch.hpp>
-#include <fn/fn.hpp>
+#include <river/fn.hpp>
 
 using namespace river;
 
 template <typename...>
-struct print_types;
+struct [[maybe_unused]] print_types;
 
 struct A {
   int a;

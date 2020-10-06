@@ -3,7 +3,7 @@
 //
 
 #include <catch2/catch.hpp>
-#include <fn/fn.hpp>
+#include <river/fn.hpp>
 
 int fn() {
   return 1;

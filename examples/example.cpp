@@ -1,5 +1,5 @@
 #include <cassert>
-#include <fn/fn.hpp>
+#include <river/fn.hpp>
 
 void function() {}
 

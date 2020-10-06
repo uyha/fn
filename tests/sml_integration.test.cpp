@@ -2,7 +2,7 @@
 // Created by uyha on 24.09.2020.
 
 #include <catch2/catch.hpp>
-#include <fn/fn.hpp>
+#include <river/fn.hpp>
 #include <sml/sml.hpp>
 
 struct next {};

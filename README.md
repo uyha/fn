@@ -9,7 +9,7 @@ convenient syntax. **C**'s variadic function pointers are not supported.
 ## Quickstart
 ```cpp
 #include <cassert>
-#include <fn/fn.hpp>
+#include <river/fn.hpp>
 
 void function() {}
 
