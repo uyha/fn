@@ -433,6 +433,8 @@ struct fn_trait<R (T::*)(Args...) const volatile &&noexcept> {
   using object_type = T;
   using arguments   = type_list<Args...>;
 };
+template <auto f>
+using fn_trait_of = fn_trait<decltype(f)>;
 // endregion
 
 namespace detail {
@@ -603,5 +605,9 @@ template <auto f>
 struct overloading_fn : detail::OverloadingFnImpl<decltype(f), f> {
   using detail::OverloadingFnImpl<decltype(f), f>::operator();
 };
+template <auto f>
+struct fn_trait<fn<f>> : fn_trait<decltype(f)> {};
+template <auto f>
+struct fn_trait<overloading_fn<f>> : fn_trait<decltype(f)> {};
 } // namespace river
 #endif

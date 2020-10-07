@@ -1,6 +1,8 @@
 //
 // Created by uyha on 23.09.2020.
 //
+#include "common.hpp"
+
 #include <catch2/catch.hpp>
 #include <river/fn.hpp>
 
@@ -8,85 +10,6 @@ using namespace river;
 
 template <typename...>
 struct [[maybe_unused]] print_types;
-
-struct A {
-  int a;
-
-  int fn() {
-    return a;
-  }
-  int fn_const() const {
-    return a;
-  }
-  int fn_volatile() volatile {
-    return a;
-  }
-  int fn_const_volatile() const volatile {
-    return a;
-  }
-  int fn_noexcept() noexcept {
-    return a;
-  }
-  int fn_const_noexcept() const noexcept {
-    return a;
-  }
-  int fn_volatile_noexcept() volatile noexcept {
-    return a;
-  }
-  int fn_const_volatile_noexcept() const volatile noexcept {
-    return a;
-  }
-
-  int lvalue_fn() & {
-    return a;
-  }
-  int lvalue_fn_const() const & {
-    return a;
-  }
-  int lvalue_fn_volatile() volatile & {
-    return a;
-  }
-  int lvalue_fn_const_volatile() const volatile & {
-    return a;
-  }
-  int lvalue_fn_noexcept() &noexcept {
-    return a;
-  }
-  int lvalue_fn_const_noexcept() const &noexcept {
-    return a;
-  }
-  int lvalue_fn_volatile_noexcept() volatile &noexcept {
-    return a;
-  }
-  int lvalue_fn_const_volatile_noexcept() const volatile &noexcept {
-    return a;
-  }
-
-  int rvalue_fn() && {
-    return a;
-  }
-  int rvalue_fn_const() const && {
-    return a;
-  }
-  int rvalue_fn_volatile() volatile && {
-    return a;
-  }
-  int rvalue_fn_const_volatile() const volatile && {
-    return a;
-  }
-  int rvalue_fn_noexcept() &&noexcept {
-    return a;
-  }
-  int rvalue_fn_const_noexcept() const &&noexcept {
-    return a;
-  }
-  int rvalue_fn_volatile_noexcept() volatile &&noexcept {
-    return a;
-  }
-  int rvalue_fn_const_volatile_noexcept() const volatile &&noexcept {
-    return a;
-  }
-};
 
 TEST_CASE("Member pointer can be call with any type of object when using overloading_fn") {
   A lvalue{0};
