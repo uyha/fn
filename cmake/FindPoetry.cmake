@@ -1,6 +1,8 @@
 find_program(Poetry_EXECUTABLE poetry HINTS ${Poetry_DIR})
 
 if (Poetry_EXECUTABLE)
+    add_executable(Poetry::Poetry IMPORTED)
+    set_target_properties(Poetry::Poetry PROPERTIES IMPORTED_LOCATION "${Poetry_EXECUTABLE}")
     execute_process(
             COMMAND ${Poetry_EXECUTABLE} --version
             RESULT_VARIABLE result

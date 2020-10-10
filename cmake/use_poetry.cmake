@@ -6,5 +6,4 @@ elseif (${CMAKE_SOURCE_DIR}/pyproject.toml IS_NEWER_THAN ${CMAKE_BINARY_DIR}/poe
     file(COPY ${CMAKE_SOURCE_DIR}/pyproject.toml DESTINATION ${CMAKE_BINARY_DIR})
     poetry_update(DIR ${CMAKE_BINARY_DIR} OPTIONS "--no-dev")
 endif ()
-poetry_path(path DIR ${CMAKE_BINARY_DIR})
 watch(FILES ${CMAKE_SOURCE_DIR}/pyproject.toml)

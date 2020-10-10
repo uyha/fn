@@ -2,6 +2,8 @@ find_program(Conan_EXECUTABLE conan HINTS ${Conan_DIR})
 
 if (Conan_EXECUTABLE)
     set(CONAN_CMD ${Conan_EXECUTABLE})
+    add_executable(Conan::Conan IMPORTED)
+    set_target_properties(Conan::Conan PROPERTIES IMPORTED_LOCATION "${Conan_EXECUTABLE}")
     function(download_conan_cmake out)
         set(options ";")
         set(single_values DIR)
