@@ -3,10 +3,16 @@
 //
 
 #pragma once
-inline void inline_empty_function() {}
-inline int inline_const_value_function() {
+inline void inline_empty() {}
+inline void inline_empty_noexcept() noexcept {}
+inline int inline_const_value() {
+  return 42;
+}
+inline int inline_const_value_noexcept() noexcept {
   return 42;
 }
 
-void empty_function();
-int const_value_function();
+void empty();
+void empty_noexcept() noexcept;
+int const_value();
+int const_value_noexcept() noexcept;

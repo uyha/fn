@@ -1,4 +1,4 @@
-include(dependencies)
+include(use_conan)
 
 find_package(benchmark REQUIRED)
 

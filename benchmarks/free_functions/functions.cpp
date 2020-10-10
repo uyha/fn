@@ -4,7 +4,11 @@
 
 #include "functions.hpp"
 
-void empty_function() {}
-int const_value_function() {
+void empty() {}
+void empty_noexcept() noexcept {}
+int const_value() {
+  return 42;
+}
+int const_value_noexcept() noexcept {
   return 42;
 }

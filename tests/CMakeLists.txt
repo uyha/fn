@@ -1,4 +1,4 @@
-include(dependencies)
+include(use_conan)
 include(CTest)
 find_package(Catch2)
 
