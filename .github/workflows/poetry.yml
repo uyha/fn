@@ -8,7 +8,11 @@ jobs:
     strategy:
       matrix:
         cpp_standard: [ 17, 20 ]
-        cpp_compiler: [ g++-8, g++-9, clang++-8, clang++-9 ]
+        compiler:
+          - { cc: gcc-8, cxx: g++-8 }
+          - { cc: gcc-9, cxx: g++-9 }
+          - { cc: clang-8, cxx: clang++-8 }
+          - { cc: clang-9, cxx: clang++-9 }
         os: [ ubuntu-20.04 ]
     runs-on: ${{matrix.os}}
     steps:
@@ -19,7 +23,8 @@ jobs:
         run: >
           cmake -B build $GITHUB_WORKSPACE
           -DCMAKE_BUILD_TYPE=RELEASE -DPoetry_DIR=$HOME/.poetry/bin
-          -DCMAKE_CXX_STANDARD=${{matrix.cpp_standard}} -DCMAKE_CXX_COMPILER=${{matrix.cpp_compiler}}
+          -DCMAKE_CXX_STANDARD=${{matrix.cpp_standard}}
+          -DCMAKE_C_COMPILER=${{matrix.compiler.cc}} -DCMAKE_CXX_COMPILER=${{matrix.compiler.cxx}}
       - name: Build
         run: cmake --build build --config release
       - name: Run tests
