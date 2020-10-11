@@ -2,7 +2,7 @@ include(utilities)
 
 if (EXISTS ${CMAKE_SOURCE_DIR}/pyproject.toml)
     include(use_poetry)
-    poetry_path(path)
+    poetry_path(path DIR ${CMAKE_CURRENT_BINARY_DIR})
     set(Conan_DIR ${Conan_DIR} ${path}/Scripts ${path}/bin)
 endif ()
 
