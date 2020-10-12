@@ -6,50 +6,30 @@
 
 #include <benchmark/benchmark.h>
 
-// region inline
-static void BM_inline_empty(benchmark::State &state) {
-  for (auto _ : state) {
-    inline_empty();
-  }
-}
-BENCHMARK(BM_inline_empty); // NOLINT(cert-err58-cpp)
+#define BM(fn_name)                                                                                                    \
+  static void BM_##fn_name(benchmark::State &state) {                                                                  \
+    for (auto _ : state) {                                                                                             \
+      fn_name();                                                                                                       \
+    }                                                                                                                  \
+  }                                                                                                                    \
+  BENCHMARK(BM_##fn_name); // NOLINT(cert-err58-cpp)
 
-static void BM_inline_empty_noexcept(benchmark::State &state) {
-  for (auto _ : state) {
-    inline_empty_noexcept();
-  }
-}
-BENCHMARK(BM_inline_empty_noexcept); // NOLINT(cert-err58-cpp)
+#define BM_NOOPT(fn_name)                                                                                              \
+  static void BM_##fn_name(benchmark::State &state) {                                                                  \
+    for (auto _ : state) {                                                                                             \
+      benchmark::DoNotOptimize(fn_name());                                                                             \
+    }                                                                                                                  \
+  }                                                                                                                    \
+  BENCHMARK(BM_##fn_name); // NOLINT(cert-err58-cpp)
 
-static void BM_inline_const_value(benchmark::State &state) {
-  for (auto _ : state) {
-    benchmark::DoNotOptimize(inline_const_value());
-  }
-}
-BENCHMARK(BM_inline_const_value); // NOLINT(cert-err58-cpp)
+BM(inline_empty)
+BM(inline_empty_noexcept)
+BM_NOOPT(inline_const_value)
+BM_NOOPT(inline_const_value_noexcept)
 
-static void BM_inline_const_value_noexcept(benchmark::State &state) {
-  for (auto _ : state) {
-    benchmark::DoNotOptimize(inline_const_value_noexcept());
-  }
-}
-BENCHMARK(BM_inline_const_value_noexcept); // NOLINT(cert-err58-cpp)
-// endregion
-
-// region outline
-static void BM_empty(benchmark::State &state) {
-  for (auto _ : state) {
-    empty();
-  }
-}
-BENCHMARK(BM_empty); // NOLINT(cert-err58-cpp)
-
-static void BM_const_value(benchmark::State &state) {
-  for (auto _ : state) {
-    benchmark::DoNotOptimize(const_value());
-  }
-}
-BENCHMARK(BM_const_value); // NOLINT(cert-err58-cpp)
-// endregion
+BM(empty)
+BM(empty_noexcept)
+BM_NOOPT(const_value)
+BM_NOOPT(const_value_noexcept)
 
 BENCHMARK_MAIN();

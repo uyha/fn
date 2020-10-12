@@ -11,8 +11,12 @@ inline int inline_const_value() {
 inline int inline_const_value_noexcept() noexcept {
   return 42;
 }
+inline int inline_one_arg(int input) {
+  return input;
+}
 
 void empty();
 void empty_noexcept() noexcept;
 int const_value();
 int const_value_noexcept() noexcept;
+int one_arg(int input);
