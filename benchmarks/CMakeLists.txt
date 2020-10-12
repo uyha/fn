@@ -15,6 +15,7 @@ add_custom_target(pull_compare DEPENDS benchmark/tools/compare.py)
 function(bootstrap_bm name)
     add_executable(${name} ${ARGN})
     target_link_libraries(${name} PRIVATE benchmark::benchmark)
+    target_compile_features(${name} PRIVATE cxx_std_20)
     add_dependencies(bm ${name})
 endfunction()
 

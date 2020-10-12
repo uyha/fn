@@ -12,3 +12,6 @@ int const_value() {
 int const_value_noexcept() noexcept {
   return 42;
 }
+std::int64_t one_arg(int64_t input) {
+  return input;
+}
