@@ -3,6 +3,7 @@
 //
 
 #include "functions.hpp"
+#include "sample_classes.hpp"
 
 #include <benchmark/benchmark.h>
 
