@@ -1,6 +1,6 @@
 find_program(Poetry_EXECUTABLE poetry HINTS ${Poetry_DIR})
 
-if (Poetry_EXECUTABLE)
+if (Poetry_EXECUTABLE AND NOT Poetry_FOUND)
     add_executable(Poetry::Poetry IMPORTED)
     set_target_properties(Poetry::Poetry PROPERTIES IMPORTED_LOCATION "${Poetry_EXECUTABLE}")
     execute_process(
