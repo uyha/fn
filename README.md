@@ -40,6 +40,8 @@ int main() {
   assert(member(A{}) == 0);
 }
 ```
+## Usage
+This is a header only library, just copy `fn.hpp` to your project and start using it. This library requires C++17.
 
 ## Features
 This library provides 1 trait and 2 wrapper classes. The trait `fn_trait` provides details about a (member) function 
@@ -112,8 +114,4 @@ int main(){
 main:
         jmp     test()
 ```
-
-## Usage
-This is a header only library, just copy `fn.hpp` to your project and start using it. This library requires C++17.
-
 [sml]: https://github.com/boost-ext/sml
