@@ -35,7 +35,7 @@
   void BM_##fn_name(benchmark::State &state, Args &&... args) {                                                        \
     for (auto _ : state) {                                                                                             \
       constexpr auto f = construct(fn_name);                                                                           \
-      opt(fn_name(std::forward<Args>(args)...));                                                                       \
+      opt(fn_name(args...));                                                                                           \
     }                                                                                                                  \
   }                                                                                                                    \
   BENCHMARK_CAPTURE(BM_##fn_name, , first_arg __VA_OPT__(, ) __VA_ARGS__)

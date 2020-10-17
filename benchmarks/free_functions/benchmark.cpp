@@ -28,6 +28,8 @@ BM(CALL, NOOPT, inline_const_value_noexcept);                                   
 BM_ARG(CALL, NOOPT, inline_one_arg, 1);                                           // NOLINT(cert-err58-cpp)
 BM_ARG(CALL, NOOPT, inline_array_100, std::array<std::int64_t, 100>{});           // NOLINT(cert-err58-cpp)
 BM_ARG(CALL, NOOPT, inline_array_100_const_ref, std::array<std::int64_t, 100>{}); // NOLINT(cert-err58-cpp)
+BM_ARG(CALL, NOOPT, inline_vector_value, std::vector<std::int64_t>{1, 2});        // NOLINT(cert-err58-cpp)
+BM_ARG(CALL, NOOPT, inline_vector_const_ref, std::vector<std::int64_t>{1, 2});    // NOLINT(cert-err58-cpp)
 
 BM(CALL, ID, empty);                                                       // NOLINT(cert-err58-cpp)
 BM(CALL, ID, empty_noexcept);                                              // NOLINT(cert-err58-cpp)
@@ -36,5 +38,7 @@ BM(CALL, NOOPT, const_value_noexcept);                                     // NO
 BM_ARG(CALL, NOOPT, one_arg, 1);                                           // NOLINT(cert-err58-cpp)
 BM_ARG(CALL, NOOPT, array_100, std::array<std::int64_t, 100>{});           // NOLINT(cert-err58-cpp)
 BM_ARG(CALL, NOOPT, array_100_const_ref, std::array<std::int64_t, 100>{}); // NOLINT(cert-err58-cpp)
+BM_ARG(CALL, NOOPT, vector_value, std::vector<std::int64_t>{1});           // NOLINT(cert-err58-cpp)
+BM_ARG(CALL, NOOPT, vector_const_ref, std::vector<std::int64_t>{1});       // NOLINT(cert-err58-cpp)
 
 BENCHMARK_MAIN();
