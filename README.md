@@ -67,6 +67,52 @@ arguments and not an overload set of it since **sml** fails to call the correct 
 If you need an object that can be called with all the possible valid arguments, then `overloading_fn` should be used 
 instead.
 
+## Performance
+This library incurs no overhead when `fn` and `overloading_fn` are used in `constexpr` context and maximum optimization.
+
+### Same TU function pointer
+
+https://godbolt.org/z/M8xxh1
+```cpp
+#include <river/fn.hpp>
+
+int test(){
+    return 42;
+}
+
+int main(){
+    const auto f = river::fn<test>{};
+    return f();
+}
+```
+
+```asm
+test():
+        mov     eax, 42
+        ret
+main:
+        mov     eax, 42
+        ret
+```
+
+### Different TU function pointer
+
+https://godbolt.org/z/rf5zfE
+```cpp
+#include <river/fn.hpp>
+int test();
+
+int main(){
+    const auto f = river::fn<test>{};
+    return f();
+}
+```
+
+```asm
+main:
+        jmp     test()
+```
+
 ## Usage
 This is a header only library, just copy `fn.hpp` to your project and start using it. This library requires C++17.
 
