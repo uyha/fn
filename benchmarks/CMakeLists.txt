@@ -16,7 +16,7 @@ function(bootstrap_bm name)
     add_executable(${name} ${ARGN})
     target_link_libraries(${name} PRIVATE benchmark::benchmark)
     target_include_directories(${name} PRIVATE ${CMAKE_SOURCE_DIR}/benchmarks/helpers)
-    target_compile_features(${name} PRIVATE cxx_std_20)
+    target_compile_features(${name} PUBLIC cxx_std_20)
     add_dependencies(bm ${name})
 endfunction()
 

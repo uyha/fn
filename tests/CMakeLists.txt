@@ -1,6 +1,7 @@
 include(use_conan)
-include(CTest)
 find_package(Catch2)
+
+enable_testing()
 
 macro(construct_test name)
     add_executable(${name} main.cpp ${ARGN})

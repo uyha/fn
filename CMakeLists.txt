@@ -10,4 +10,7 @@ add_subdirectory(examples)
 add_subdirectory(external)
 add_subdirectory(src)
 add_subdirectory(tests)
-add_subdirectory(benchmarks)
+
+if (FN_INCLUDE_BENCHMARKS)
+    add_subdirectory(benchmarks)
+endif ()
