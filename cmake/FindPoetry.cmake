@@ -1,13 +1,23 @@
-find_program(Poetry_EXECUTABLE poetry HINTS ${Poetry_DIR})
+find_program(Poetry_EXECUTABLE poetry HINTS ${Poetry_DIR} ${Poetry_DIR}/bin ${Poetry_DIR}/Scripts)
 
-if (Poetry_EXECUTABLE AND NOT Poetry_FOUND)
-    add_executable(Poetry::Poetry IMPORTED)
-    set_target_properties(Poetry::Poetry PROPERTIES IMPORTED_LOCATION "${Poetry_EXECUTABLE}")
-    execute_process(
-            COMMAND ${Poetry_EXECUTABLE} --version
-            RESULT_VARIABLE result
-            OUTPUT_VARIABLE version
-    )
+if (Poetry_EXECUTABLE)
+    if (NOT TARGET Poetry::Poetry)
+        add_executable(Poetry::Poetry IMPORTED)
+        set_target_properties(Poetry::Poetry PROPERTIES IMPORTED_LOCATION "${Poetry_EXECUTABLE}")
+    endif ()
+    if (WIN32)
+        execute_process(
+                COMMAND cmd /C ${Poetry_EXECUTABLE} --version
+                RESULT_VARIABLE result
+                OUTPUT_VARIABLE version
+        )
+    else ()
+        execute_process(
+                COMMAND ${Poetry_EXECUTABLE} --version
+                RESULT_VARIABLE result
+                OUTPUT_VARIABLE version
+        )
+    endif ()
     if (result EQUAL 0)
         if (${version} MATCHES ".*version(.*)")
             string(STRIP ${CMAKE_MATCH_1} Poetry_VERSION)
@@ -67,4 +77,6 @@ if (Poetry_EXECUTABLE AND NOT Poetry_FOUND)
 endif ()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Poetry DEFAULT_MSG Poetry_EXECUTABLE)
+find_package_handle_standard_args(Poetry
+        REQUIRED_VARS Poetry_EXECUTABLE
+        VERSION_VAR Poetry_VERSION)

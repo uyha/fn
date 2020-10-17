@@ -1,9 +1,30 @@
-find_program(Conan_EXECUTABLE conan HINTS ${Conan_DIR})
+find_program(Conan_EXECUTABLE conan HINTS ${Conan_DIR} ${Conan_DIR}/bin ${Conan_DIR}/Scripts)
 
-if (Conan_EXECUTABLE AND NOT Conan_FOUND)
+if (Conan_EXECUTABLE)
     set(CONAN_CMD ${Conan_EXECUTABLE})
-    add_executable(Conan::Conan IMPORTED)
-    set_target_properties(Conan::Conan PROPERTIES IMPORTED_LOCATION "${Conan_EXECUTABLE}")
+    if (NOT TARGET Conan::Conan)
+        add_executable(Conan::Conan IMPORTED)
+        set_target_properties(Conan::Conan PROPERTIES IMPORTED_LOCATION "${Conan_EXECUTABLE}")
+    endif ()
+    if (WIN32)
+        execute_process(
+                COMMAND cmd /C ${Conan_EXECUTABLE} --version
+                RESULT_VARIABLE result
+                OUTPUT_VARIABLE version
+        )
+    else ()
+        execute_process(
+                COMMAND ${Conan_EXECUTABLE} --version
+                RESULT_VARIABLE result
+                OUTPUT_VARIABLE version
+        )
+    endif ()
+    if (result EQUAL 0)
+        if (${version} MATCHES ".*version(.*)")
+            string(STRIP ${CMAKE_MATCH_1} Conan_VERSION)
+        endif ()
+    endif ()
+
     function(download_conan_cmake out)
         set(options ";")
         set(single_values DIR)
@@ -29,4 +50,6 @@ if (Conan_EXECUTABLE AND NOT Conan_FOUND)
 endif ()
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Conan DEFAULT_MSG Conan_EXECUTABLE)
+find_package_handle_standard_args(Conan
+        REQUIRED_VARS Conan_EXECUTABLE
+        VERSION_VAR Conan_VERSION)
