@@ -10,12 +10,12 @@ struct A {
 };
 
 int main() {
-  auto func = river::fn<&function>{};
-  static_assert(river::fn_trait<decltype(&function)>::is_free_fn);
+  constexpr auto func = river::fn<function>{};
+  static_assert(river::fn_trait_of<function>::is_free_fn);
   func();
 
   auto mem_func = river::fn<&A::function>{};
-  static_assert(river::fn_trait<decltype(&A::function)>::is_member_fn);
+  static_assert(river::fn_trait_of<&A::function>::is_member_fn);
   A a{};
   mem_func(a);
 
