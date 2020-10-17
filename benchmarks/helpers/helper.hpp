@@ -11,6 +11,9 @@
 #error "Support for __VA_OPT__ is required to compile the benchmark code"
 #endif
 
+#define DIRECT 0
+#define WRAP 1
+
 #define ID(fn) fn
 #define NOOPT(fn) benchmark::DoNotOptimize(fn)
 

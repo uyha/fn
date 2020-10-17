@@ -15,3 +15,9 @@ int const_value_noexcept() noexcept {
 std::int64_t one_arg(int64_t input) {
   return input;
 }
+std::int64_t array_100(std::array<std::int64_t, 100> input) {
+  return input[0];
+}
+std::int64_t array_100_const_ref(std::array<std::int64_t, 100> const &input) {
+  return input[0];
+}
