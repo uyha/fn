@@ -1,4 +1,4 @@
-find_program(Poetry_EXECUTABLE poetry HINTS ${Poetry_DIR} ${Poetry_DIR}/bin ${Poetry_DIR}/Scripts)
+find_program(Poetry_EXECUTABLE poetry HINTS ${Poetry_DIR})
 
 if (Poetry_EXECUTABLE)
     if (NOT TARGET Poetry::Poetry)

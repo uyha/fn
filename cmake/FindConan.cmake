@@ -1,4 +1,4 @@
-find_program(Conan_EXECUTABLE conan HINTS ${Conan_DIR} ${Conan_DIR}/bin ${Conan_DIR}/Scripts)
+find_program(Conan_EXECUTABLE conan HINTS ${Conan_DIR})
 
 if (Conan_EXECUTABLE)
     set(CONAN_CMD ${Conan_EXECUTABLE})

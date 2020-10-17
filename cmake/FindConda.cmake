@@ -1,4 +1,4 @@
-find_program(Conda_EXECUTABLE conda HINTS ${Conda_DIR} ${Conda_DIR}/bin ${Conda_DIR}/Scripts)
+find_program(Conda_EXECUTABLE conda HINTS ${Conda_DIR})
 
 if (Conda_EXECUTABLE AND NOT Conda_FOUND)
     if (NOT TARGET Conda::Conda)
