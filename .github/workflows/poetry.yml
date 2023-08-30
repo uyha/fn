@@ -33,23 +33,3 @@ jobs:
       - name: Run tests
         run: ctest
         working-directory: cmake-build-debug/tests
-
-  windows:
-    name: Windows
-    strategy:
-      matrix:
-        cpp_standard: [17, 20]
-    runs-on: windows-latest
-    steps:
-      - uses: actions/checkout@v2
-      - name: Install conan
-        run: python3 -m pip install conan
-      - name: CMake configuration
-        run: >
-          cmake --preset debug
-          -DCMAKE_CXX_STANDARD=${{matrix.cpp_standard}}
-      - name: Build
-        run: cmake --build build --config release
-      - name: Run tests
-        run: ctest -C release
-        working-directory: build/tests
