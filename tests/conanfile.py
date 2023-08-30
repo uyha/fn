@@ -9,7 +9,7 @@ class ProjectNameTest(ConanFile):
     generators = "CMakeDeps"
 
     def requirements(self):
-        dependencies = ["catch2/3.3.2", "sml/1.1.8"]
+        dependencies = ["catch2/3.3.2", "sml/1.1.8", "fmt/10.1.1"]
 
         for dep in dependencies:
             self.requires(dep)

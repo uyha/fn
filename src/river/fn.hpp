@@ -436,6 +436,21 @@ struct fn_trait<R (T::*)(Args...) const volatile && noexcept> {
 // endregion
 
 namespace detail {
+template <auto fn>
+struct has_call_op {
+private:
+  template <typename Invocable>
+  static constexpr std::true_type call(decltype(&Invocable::operator()));
+  template <typename Fn>
+  static constexpr std::false_type call(...);
+
+public:
+  static constexpr auto value = decltype(call<decltype(fn)>(0))::value;
+};
+
+template <auto fn>
+constexpr auto has_call_op_v = has_call_op<fn>::value;
+
 template <typename T>
 constexpr T &&forward(typename std::remove_reference<T>::type &t) noexcept {
   return static_cast<T &&>(t);
@@ -543,29 +558,96 @@ struct overloading_mappers<T, false, true> {
 template <typename T>
 using overloading_mappers_t = typename overloading_mappers<T>::type;
 
+enum class CallableType {
+  free_function_pointer,
+  member_fuction_pointer,
+  member_variable_pointer,
+  callable_object,
+};
+
+template <typename>
+struct Fail : std::false_type {};
+
+template <auto fn>
+struct callable {
+private:
+  static constexpr CallableType get_callable_type() {
+    using trait = fn_trait<decltype(fn)>;
+    if constexpr (has_call_op_v<fn>) {
+      return CallableType::callable_object;
+    } else if constexpr (trait::is_free_fn) {
+      return CallableType::free_function_pointer;
+    } else if constexpr (trait::is_member_fn) {
+      return CallableType::member_fuction_pointer;
+    } else if constexpr (trait::is_member_ptr) {
+      return CallableType::member_variable_pointer;
+    } else {
+      static_assert(Fail<trait>::value);
+    }
+  }
+
+public:
+  static constexpr CallableType value = get_callable_type();
+};
+
+template <auto fn>
+static constexpr auto callable_v = callable<fn>::value;
+
+template <auto f>
+struct call {
+private:
+  template <typename Invocable>
+  static constexpr decltype(&Invocable::operator()) call_type(decltype(&Invocable::operator())) {
+    return &decltype(f)::operator();
+  }
+  template <typename Fn>
+  static constexpr decltype(f) call_type(...) {
+    return f;
+  }
+
+public:
+  using type                  = decltype(call_type<decltype(f)>(0));
+  static constexpr auto value = call_type<decltype(f)>(0);
+};
+
+template <auto fn>
+using call_t = typename call<fn>::type;
+
+template <auto fn>
+static constexpr auto call_v = call<fn>::value;
+
 template <typename T,
           T fn,
           template <typename>
           class mapper,
-          bool is_free_fn    = fn_trait<T>::is_free_fn,
-          bool is_member_ptr = fn_trait<T>::is_member_ptr,
-          typename Args      = typename fn_trait<T>::arguments>
+          CallableType callable_type = callable_v<fn>,
+          typename Args              = typename fn_trait<call_t<fn>>::arguments>
 struct SingleFnImpl;
-template <typename T, T fn, typename... Args>
-struct SingleFnImpl<T, fn, /*dummy*/ simple_mapper_t, true, false, type_list<Args...>> {
+
+template <typename T, T fn, template <typename> class object_mapper_t, typename... Args>
+struct SingleFnImpl<T, fn, /*dummy*/ object_mapper_t, CallableType::callable_object, type_list<Args...>> {
+  constexpr auto operator()(Args... args) const noexcept(fn_trait<call_t<fn>>::is_noexcept) -> decltype(auto) {
+    return fn(detail::forward<Args>(args)...);
+  }
+};
+
+template <typename T, T fn, template <typename> class object_mapper_t, typename... Args>
+struct SingleFnImpl<T, fn, /*dummy*/ object_mapper_t, CallableType::free_function_pointer, type_list<Args...>> {
   constexpr auto operator()(Args... args) const noexcept(fn_trait<T>::is_noexcept) -> decltype(auto) {
     return fn(detail::forward<Args>(args)...);
   }
 };
+
 template <typename T, T fn, template <typename> class object_mapper_t, typename... Args>
-struct SingleFnImpl<T, fn, object_mapper_t, false, false, type_list<Args...>> {
+struct SingleFnImpl<T, fn, object_mapper_t, CallableType::member_fuction_pointer, type_list<Args...>> {
   constexpr auto operator()(object_mapper_t<T> object, Args... args) const noexcept(fn_trait<T>::is_noexcept)
       -> decltype(auto) {
     return (detail::forward<decltype(object)>(object).*fn)(detail::forward<Args>(args)...);
   }
 };
+
 template <typename T, T fn, template <typename> class object_mapper_t>
-struct SingleFnImpl<T, fn, object_mapper_t, false, true, type_list<>> {
+struct SingleFnImpl<T, fn, object_mapper_t, CallableType::member_variable_pointer, type_list<>> {
   constexpr auto operator()(object_mapper_t<T> object) const noexcept -> decltype(auto) {
     return object.*fn;
   }
@@ -573,64 +655,52 @@ struct SingleFnImpl<T, fn, object_mapper_t, false, true, type_list<>> {
 
 template <typename T,
           T fn,
-          typename mappers   = overloading_mappers_t<T>,
-          bool is_free_fn    = fn_trait<T>::is_free_fn,
-          bool is_member_ptr = fn_trait<T>::is_member_ptr,
-          typename Args      = typename fn_trait<T>::arguments>
+          typename mappers           = overloading_mappers_t<call_t<fn>>,
+          CallableType callable_type = callable_v<fn>,
+          typename Args              = typename fn_trait<call_t<fn>>::arguments>
 struct OverloadingFnImpl;
-template <typename T, T fn, typename... Args>
-struct OverloadingFnImpl<T, fn, type_list<>, true, false, type_list<Args...>>
-    : SingleFnImpl<T, fn, /*dummy*/ simple_mapper_t, true, false, type_list<Args...>> {
-  using SingleFnImpl<T, fn, simple_mapper_t, true, false, type_list<Args...>>::operator();
-};
+
 template <typename T, T fn, template <typename> class... mappers, typename... Args>
-struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, false, false, type_list<Args...>>
-    : SingleFnImpl<T, fn, mappers, false, false, type_list<Args...>>... {
-  using SingleFnImpl<T, fn, mappers, false, false, type_list<Args...>>::operator()...;
+struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, CallableType::callable_object, type_list<Args...>>
+    : SingleFnImpl<T, fn, simple_mapper, CallableType::callable_object, type_list<Args...>> {
+  using SingleFnImpl<T, fn, simple_mapper, CallableType::callable_object, type_list<Args...>>::operator();
 };
+
+template <typename T, T fn, typename... Args>
+struct OverloadingFnImpl<T, fn, type_list<>, CallableType::free_function_pointer, type_list<Args...>>
+    : SingleFnImpl<T, fn, /*dummy*/ simple_mapper_t, CallableType::free_function_pointer, type_list<Args...>> {
+  using SingleFnImpl<T, fn, simple_mapper_t, CallableType::free_function_pointer, type_list<Args...>>::operator();
+};
+
+template <typename T, T fn, template <typename> class... mappers, typename... Args>
+struct OverloadingFnImpl<T,
+                         fn,
+                         higher_order_type_list<mappers...>,
+                         CallableType::member_fuction_pointer,
+                         type_list<Args...>>
+    : SingleFnImpl<T, fn, mappers, CallableType::member_fuction_pointer, type_list<Args...>>... {
+  using SingleFnImpl<T, fn, mappers, CallableType::member_fuction_pointer, type_list<Args...>>::operator()...;
+};
+
 template <typename T, T fn, template <typename> class... mappers>
-struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, false, true, type_list<>>
-    : SingleFnImpl<T, fn, mappers, false, true, type_list<>>... {
-  using SingleFnImpl<T, fn, mappers, false, true, type_list<>>::operator()...;
-};
-
-template <auto f>
-struct call_type_impl {
-private:
-  template <typename Invocable>
-  static constexpr decltype(&Invocable::operator()) call(decltype(&Invocable::operator())) {
-    return &decltype(f)::operator();
-  }
-  template <typename Fn>
-  static constexpr decltype(f) call(...) {
-    return f;
-  }
-
-public:
-  using type                  = decltype(call<decltype(f)>(0));
-  static constexpr auto value = call<decltype(f)>(0);
+struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, CallableType::member_variable_pointer, type_list<>>
+    : SingleFnImpl<T, fn, mappers, CallableType::member_variable_pointer, type_list<>>... {
+  using SingleFnImpl<T, fn, mappers, CallableType::member_variable_pointer, type_list<>>::operator()...;
 };
 } // namespace detail
 template <auto f>
-struct fn
-    : detail::SingleFnImpl<typename detail::call_type_impl<f>::type,
-                           detail::call_type_impl<f>::value,
-                           detail::simple_mapper_t> {
-  using detail::SingleFnImpl<typename detail::call_type_impl<f>::type,
-                             detail::call_type_impl<f>::value,
-                             detail::simple_mapper_t>::operator();
+struct fn : detail::SingleFnImpl<decltype(f), f, detail::simple_mapper_t> {
+  using detail::SingleFnImpl<decltype(f), f, detail::simple_mapper_t>::operator();
 };
 template <auto f>
-struct overloading_fn
-    : detail::OverloadingFnImpl<typename detail::call_type_impl<f>::type, detail::call_type_impl<f>::value> {
-  using detail::OverloadingFnImpl<typename detail::call_type_impl<f>::type,
-                                  detail::call_type_impl<f>::value>::operator();
+struct overloading_fn : detail::OverloadingFnImpl<decltype(f), f> {
+  using detail::OverloadingFnImpl<decltype(f), f>::operator();
 };
 template <auto f>
-struct fn_trait<fn<f>> : fn_trait<typename detail::call_type_impl<f>::type> {};
+struct fn_trait<fn<f>> : fn_trait<detail::call_t<f>> {};
 template <auto f>
-struct fn_trait<overloading_fn<f>> : fn_trait<typename detail::call_type_impl<f>::type> {};
+struct fn_trait<overloading_fn<f>> : fn_trait<detail::call_t<f>> {};
 template <auto f>
-using fn_trait_of = fn_trait<typename detail::call_type_impl<f>::type>;
+using fn_trait_of = fn_trait<detail::call_t<f>>;
 } // namespace river
 #endif
