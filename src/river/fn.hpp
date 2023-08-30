@@ -466,9 +466,9 @@ using cv_rvalue_ref_t = typename fn_trait<T>::object_type const volatile &&;
 template <typename T>
 struct simple_mapper {
 private:
-  static constexpr auto is_const    = fn_trait<T>::is_const;
-  static constexpr auto is_volatile = fn_trait<T>::is_volatile;
-  static const auto is_rvalue_ref   = fn_trait<T>::is_rvalue_ref;
+  static constexpr auto is_const      = fn_trait<T>::is_const;
+  static constexpr auto is_volatile   = fn_trait<T>::is_volatile;
+  static constexpr auto is_rvalue_ref = fn_trait<T>::is_rvalue_ref;
 
   using object_type = typename fn_trait<T>::object_type;
 
@@ -495,10 +495,10 @@ struct overloading_mappers<T, true, false> {
 template <typename T>
 struct overloading_mappers<T, false, false> {
 private:
-  static constexpr auto is_const    = fn_trait<T>::is_const;
-  static constexpr auto is_volatile = fn_trait<T>::is_volatile;
-  static const auto is_rvalue_ref   = fn_trait<T>::is_rvalue_ref;
-  static const auto is_lvalue_ref   = fn_trait<T>::is_lvalue_ref;
+  static constexpr auto is_const      = fn_trait<T>::is_const;
+  static constexpr auto is_volatile   = fn_trait<T>::is_volatile;
+  static constexpr auto is_rvalue_ref = fn_trait<T>::is_rvalue_ref;
+  static constexpr auto is_lvalue_ref = fn_trait<T>::is_lvalue_ref;
 
 public:
   using type = std::conditional_t<
