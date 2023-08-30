@@ -4,7 +4,7 @@
 
 #include "common.hpp"
 
-#include <catch2/catch.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <river/fn.hpp>
 
 TEST_CASE("fn of free function pointers can be called with the correct arguments") {

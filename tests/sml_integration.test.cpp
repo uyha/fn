@@ -1,9 +1,9 @@
 //
 // Created by uyha on 24.09.2020.
 
-#include <catch2/catch.hpp>
+#include <boost/sml.hpp>
+#include <catch2/catch_test_macros.hpp>
 #include <river/fn.hpp>
-#include <sml/sml.hpp>
 
 struct next {};
 struct s1 {};

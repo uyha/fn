@@ -4,10 +4,14 @@ project("fn"
         # There is a bug in conan.cmake that make libraries fail to build if LANGUAGES is specified with only CXX
         LANGUAGES C CXX)
 
-set(CMAKE_MODULE_PATH ${CMAKE_SOURCE_DIR}/cmake ${CMAKE_MODULE_PATH})
+include(FetchContent)
+FetchContent_Declare(river
+                     GIT_REPOSITORY https://github.com/uyha/cmake-modules.git
+                     GIT_TAG v0.1.0)
+FetchContent_MakeAvailable(river)
+list(APPEND CMAKE_MODULE_PATH "${river_SOURCE_DIR}")
 
 add_subdirectory(examples)
-add_subdirectory(external)
 add_subdirectory(src)
 add_subdirectory(tests)
 
