@@ -620,6 +620,6 @@ struct fn_trait<fn<f>> : fn_trait<decltype(f)> {};
 template <auto f>
 struct fn_trait<overloading_fn<f>> : fn_trait<decltype(f)> {};
 template <auto f>
-using fn_trait_of = detail::fn_trait_of_impl<f>::type;
+using fn_trait_of = typename detail::fn_trait_of_impl<f>::type;
 } // namespace river
 #endif
