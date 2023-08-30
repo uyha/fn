@@ -42,13 +42,12 @@ jobs:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v2
-      - name: install poetry
-        run: (Invoke-WebRequest -Uri https://raw.githubusercontent.com/python-poetry/poetry/master/get-poetry.py -UseBasicParsing).Content | python
+      - name: Install conan
+        run: python3 -m pip install conan
       - name: CMake configuration
         run: >
-          cmake -B build $env:GITHUB_WORKSPACE
-          -DPoetry_DIR="$env:USERPROFILE\.poetry\bin"
-          -DCMAKE_BUILD_TYPE=RELEASE -DCMAKE_CXX_STANDARD=${{matrix.cpp_standard}}
+          cmake --preset debug
+          -DCMAKE_CXX_STANDARD=${{matrix.cpp_standard}}
       - name: Build
         run: cmake --build build --config release
       - name: Run tests
