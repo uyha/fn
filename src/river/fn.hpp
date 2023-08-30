@@ -594,6 +594,18 @@ struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, false, true,
   using SingleFnImpl<T, fn, mappers, false, true, type_list<>>::operator()...;
 };
 
+template <auto fn>
+struct fn_trait_of_impl {
+private:
+  template <typename Invocable>
+  static constexpr fn_trait<decltype(&Invocable::operator())> check(decltype(&Invocable::operator()));
+
+  template <typename Fn>
+  static constexpr fn_trait<std::remove_cvref_t<Fn>> check(...);
+
+public:
+  using type = decltype(check<decltype(fn)>(0));
+};
 } // namespace detail
 template <auto f>
 struct fn : detail::SingleFnImpl<decltype(f), f, detail::simple_mapper_t> {
@@ -608,6 +620,6 @@ struct fn_trait<fn<f>> : fn_trait<decltype(f)> {};
 template <auto f>
 struct fn_trait<overloading_fn<f>> : fn_trait<decltype(f)> {};
 template <auto f>
-using fn_trait_of = fn_trait<std::remove_cv_t<decltype(f)>>;
+using fn_trait_of = detail::fn_trait_of_impl<f>::type;
 } // namespace river
 #endif
