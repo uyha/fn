@@ -601,7 +601,7 @@ private:
   static constexpr fn_trait<decltype(&Invocable::operator())> check(decltype(&Invocable::operator()));
 
   template <typename Fn>
-  static constexpr fn_trait<std::remove_cvref_t<Fn>> check(...);
+  static constexpr fn_trait<std::remove_cv_t<Fn>> check(...);
 
 public:
   using type = decltype(check<decltype(fn)>(0));
