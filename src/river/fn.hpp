@@ -594,32 +594,43 @@ struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, false, true,
   using SingleFnImpl<T, fn, mappers, false, true, type_list<>>::operator()...;
 };
 
-template <auto fn>
-struct fn_trait_of_impl {
+template <auto f>
+struct call_type_impl {
 private:
   template <typename Invocable>
-  static constexpr fn_trait<decltype(&Invocable::operator())> check(decltype(&Invocable::operator()));
-
+  static constexpr decltype(&Invocable::operator()) call(decltype(&Invocable::operator())) {
+    return &decltype(f)::operator();
+  }
   template <typename Fn>
-  static constexpr fn_trait<std::remove_cv_t<Fn>> check(...);
+  static constexpr decltype(f) call(...) {
+    return f;
+  }
 
 public:
-  using type = decltype(check<decltype(fn)>(0));
+  using type                  = decltype(call<decltype(f)>(0));
+  static constexpr auto value = call<decltype(f)>(0);
 };
 } // namespace detail
 template <auto f>
-struct fn : detail::SingleFnImpl<decltype(f), f, detail::simple_mapper_t> {
-  using detail::SingleFnImpl<decltype(f), f, detail::simple_mapper_t>::operator();
+struct fn
+    : detail::SingleFnImpl<typename detail::call_type_impl<f>::type,
+                           detail::call_type_impl<f>::value,
+                           detail::simple_mapper_t> {
+  using detail::SingleFnImpl<typename detail::call_type_impl<f>::type,
+                             detail::call_type_impl<f>::value,
+                             detail::simple_mapper_t>::operator();
 };
 template <auto f>
-struct overloading_fn : detail::OverloadingFnImpl<decltype(f), f> {
-  using detail::OverloadingFnImpl<decltype(f), f>::operator();
+struct overloading_fn
+    : detail::OverloadingFnImpl<typename detail::call_type_impl<f>::type, detail::call_type_impl<f>::value> {
+  using detail::OverloadingFnImpl<typename detail::call_type_impl<f>::type,
+                                  detail::call_type_impl<f>::value>::operator();
 };
 template <auto f>
-struct fn_trait<fn<f>> : fn_trait<decltype(f)> {};
+struct fn_trait<fn<f>> : fn_trait<typename detail::call_type_impl<f>::type> {};
 template <auto f>
-struct fn_trait<overloading_fn<f>> : fn_trait<decltype(f)> {};
+struct fn_trait<overloading_fn<f>> : fn_trait<typename detail::call_type_impl<f>::type> {};
 template <auto f>
-using fn_trait_of = typename detail::fn_trait_of_impl<f>::type;
+using fn_trait_of = fn_trait<typename detail::call_type_impl<f>::type>;
 } // namespace river
 #endif
