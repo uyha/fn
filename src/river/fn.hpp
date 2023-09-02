@@ -35,11 +35,77 @@ struct type_list {};
 template <template <typename...> class... Ts>
 struct higher_order_type_list {};
 
-// region fn_trait
+namespace detail {
+template <typename>
+struct Fail : std::false_type {};
+
 template <typename T>
-struct fn_trait;
+struct strip_qualifier {
+  using type = T;
+};
+
+template <typename T>
+struct strip_qualifier<T const> {
+  using type = T;
+};
+
+template <typename T>
+struct strip_qualifier<T volatile> {
+  using type = T;
+};
+
+template <typename T>
+struct strip_qualifier<T const volatile> {
+  using type = T;
+};
+
+template <typename T>
+struct strip_qualifier<T &> {
+  using type = T;
+};
+
+template <typename T>
+struct strip_qualifier<T const &> {
+  using type = T;
+};
+
+template <typename T>
+struct strip_qualifier<T volatile &> {
+  using type = T;
+};
+
+template <typename T>
+struct strip_qualifier<T const volatile &> {
+  using type = T;
+};
+
+template <typename T>
+struct strip_qualifier<T &&> {
+  using type = T;
+};
+
+template <typename T>
+struct strip_qualifier<T const &&> {
+  using type = T;
+};
+
+template <typename T>
+struct strip_qualifier<T volatile &&> {
+  using type = T;
+};
+
+template <typename T>
+struct strip_qualifier<T const volatile &&> {
+  using type = T;
+};
+
+template <typename T>
+using strip_qualifier_t = typename strip_qualifier<T>::type;
+
+template <typename T>
+struct fn_trait_impl;
 template <typename R, typename... Args>
-struct fn_trait<R (*)(Args...)> {
+struct fn_trait_impl<R (*)(Args...)> {
   static constexpr bool is_free_fn    = true;
   static constexpr bool is_member_fn  = false;
   static constexpr bool is_member_ptr = false;
@@ -49,7 +115,7 @@ struct fn_trait<R (*)(Args...)> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename... Args>
-struct fn_trait<R (*)(Args...) noexcept> {
+struct fn_trait_impl<R (*)(Args...) noexcept> {
   static constexpr bool is_free_fn    = true;
   static constexpr bool is_member_fn  = false;
   static constexpr bool is_member_ptr = false;
@@ -59,7 +125,7 @@ struct fn_trait<R (*)(Args...) noexcept> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T>
-struct fn_trait<R(T::*)> {
+struct fn_trait_impl<R(T::*)> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = false;
   static constexpr bool is_member_ptr = true;
@@ -74,7 +140,7 @@ struct fn_trait<R(T::*)> {
   using arguments   = type_list<>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...)> {
+struct fn_trait_impl<R (T::*)(Args...)> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -89,7 +155,7 @@ struct fn_trait<R (T::*)(Args...)> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) const> {
+struct fn_trait_impl<R (T::*)(Args...) const> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -104,7 +170,7 @@ struct fn_trait<R (T::*)(Args...) const> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) volatile> {
+struct fn_trait_impl<R (T::*)(Args...) volatile> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -119,7 +185,7 @@ struct fn_trait<R (T::*)(Args...) volatile> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) const volatile> {
+struct fn_trait_impl<R (T::*)(Args...) const volatile> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -134,7 +200,7 @@ struct fn_trait<R (T::*)(Args...) const volatile> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) noexcept> {
+struct fn_trait_impl<R (T::*)(Args...) noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -149,7 +215,7 @@ struct fn_trait<R (T::*)(Args...) noexcept> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) const noexcept> {
+struct fn_trait_impl<R (T::*)(Args...) const noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -164,7 +230,7 @@ struct fn_trait<R (T::*)(Args...) const noexcept> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) volatile noexcept> {
+struct fn_trait_impl<R (T::*)(Args...) volatile noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -179,7 +245,7 @@ struct fn_trait<R (T::*)(Args...) volatile noexcept> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) const volatile noexcept> {
+struct fn_trait_impl<R (T::*)(Args...) const volatile noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -194,7 +260,7 @@ struct fn_trait<R (T::*)(Args...) const volatile noexcept> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) &> {
+struct fn_trait_impl<R (T::*)(Args...) &> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -209,7 +275,7 @@ struct fn_trait<R (T::*)(Args...) &> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) const &> {
+struct fn_trait_impl<R (T::*)(Args...) const &> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -224,7 +290,7 @@ struct fn_trait<R (T::*)(Args...) const &> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) volatile &> {
+struct fn_trait_impl<R (T::*)(Args...) volatile &> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -239,7 +305,7 @@ struct fn_trait<R (T::*)(Args...) volatile &> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) const volatile &> {
+struct fn_trait_impl<R (T::*)(Args...) const volatile &> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -254,7 +320,7 @@ struct fn_trait<R (T::*)(Args...) const volatile &> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) & noexcept> {
+struct fn_trait_impl<R (T::*)(Args...) & noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -269,7 +335,7 @@ struct fn_trait<R (T::*)(Args...) & noexcept> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) const & noexcept> {
+struct fn_trait_impl<R (T::*)(Args...) const & noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -284,7 +350,7 @@ struct fn_trait<R (T::*)(Args...) const & noexcept> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) volatile & noexcept> {
+struct fn_trait_impl<R (T::*)(Args...) volatile & noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -299,7 +365,7 @@ struct fn_trait<R (T::*)(Args...) volatile & noexcept> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) const volatile & noexcept> {
+struct fn_trait_impl<R (T::*)(Args...) const volatile & noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -314,7 +380,7 @@ struct fn_trait<R (T::*)(Args...) const volatile & noexcept> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) &&> {
+struct fn_trait_impl<R (T::*)(Args...) &&> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -329,7 +395,7 @@ struct fn_trait<R (T::*)(Args...) &&> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) const &&> {
+struct fn_trait_impl<R (T::*)(Args...) const &&> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -344,7 +410,7 @@ struct fn_trait<R (T::*)(Args...) const &&> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) volatile &&> {
+struct fn_trait_impl<R (T::*)(Args...) volatile &&> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -359,7 +425,7 @@ struct fn_trait<R (T::*)(Args...) volatile &&> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) const volatile &&> {
+struct fn_trait_impl<R (T::*)(Args...) const volatile &&> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -374,7 +440,7 @@ struct fn_trait<R (T::*)(Args...) const volatile &&> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) && noexcept> {
+struct fn_trait_impl<R (T::*)(Args...) && noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -389,7 +455,7 @@ struct fn_trait<R (T::*)(Args...) && noexcept> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) const && noexcept> {
+struct fn_trait_impl<R (T::*)(Args...) const && noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -404,7 +470,7 @@ struct fn_trait<R (T::*)(Args...) const && noexcept> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) volatile && noexcept> {
+struct fn_trait_impl<R (T::*)(Args...) volatile && noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -419,7 +485,7 @@ struct fn_trait<R (T::*)(Args...) volatile && noexcept> {
   using arguments   = type_list<Args...>;
 };
 template <typename R, typename T, typename... Args>
-struct fn_trait<R (T::*)(Args...) const volatile && noexcept> {
+struct fn_trait_impl<R (T::*)(Args...) const volatile && noexcept> {
   static constexpr bool is_free_fn    = false;
   static constexpr bool is_member_fn  = true;
   static constexpr bool is_member_ptr = false;
@@ -433,23 +499,77 @@ struct fn_trait<R (T::*)(Args...) const volatile && noexcept> {
   using object_type = T;
   using arguments   = type_list<Args...>;
 };
-// endregion
 
-namespace detail {
-template <auto fn>
+template <typename Fn>
 struct has_call_op {
 private:
   template <typename Invocable>
   static constexpr std::true_type call(decltype(&Invocable::operator()));
-  template <typename Fn>
+  template <typename>
   static constexpr std::false_type call(...);
 
 public:
-  static constexpr auto value = decltype(call<decltype(fn)>(0))::value;
+  static constexpr auto value = decltype(call<Fn>(0))::value;
 };
 
-template <auto fn>
-constexpr auto has_call_op_v = has_call_op<fn>::value;
+template <typename Fn>
+constexpr auto has_call_op_v = has_call_op<Fn>::value;
+
+enum class CallableType {
+  free_function_pointer,
+  member_fuction_pointer,
+  member_variable_pointer,
+  callable_object,
+};
+
+template <typename Fn>
+struct callable_type {
+private:
+  using StrippedFn = strip_qualifier_t<Fn>;
+
+  template <typename Invocable>
+  static constexpr decltype(&Invocable::operator()) call_type(decltype(&Invocable::operator()));
+  template <typename>
+  static constexpr StrippedFn call_type(...);
+
+public:
+  using type = decltype(call_type<Fn>(0));
+};
+
+template <typename Fn>
+using callable_t = typename callable_type<Fn>::type;
+} // namespace detail
+
+template <typename T>
+using fn_trait = detail::fn_trait_impl<detail::callable_t<T>>;
+
+namespace detail {
+template <typename Fn>
+struct callable_value {
+private:
+  using StrippedFn = strip_qualifier_t<Fn>;
+
+  static constexpr CallableType get_callable_type() {
+    using trait = fn_trait<StrippedFn>;
+    if constexpr (has_call_op_v<StrippedFn>) {
+      return CallableType::callable_object;
+    } else if constexpr (trait::is_free_fn) {
+      return CallableType::free_function_pointer;
+    } else if constexpr (trait::is_member_fn) {
+      return CallableType::member_fuction_pointer;
+    } else if constexpr (trait::is_member_ptr) {
+      return CallableType::member_variable_pointer;
+    } else {
+      static_assert(Fail<trait>::value);
+    }
+  }
+
+public:
+  static constexpr CallableType value = get_callable_type();
+};
+
+template <typename Fn>
+constexpr auto callable_v = callable_value<Fn>::value;
 
 template <typename T>
 constexpr T &&forward(typename std::remove_reference<T>::type &t) noexcept {
@@ -558,149 +678,133 @@ struct overloading_mappers<T, false, true> {
 template <typename T>
 using overloading_mappers_t = typename overloading_mappers<T>::type;
 
-enum class CallableType {
-  free_function_pointer,
-  member_fuction_pointer,
-  member_variable_pointer,
-  callable_object,
-};
-
-template <typename>
-struct Fail : std::false_type {};
-
-template <auto fn>
-struct callable {
-private:
-  static constexpr CallableType get_callable_type() {
-    using trait = fn_trait<decltype(fn)>;
-    if constexpr (has_call_op_v<fn>) {
-      return CallableType::callable_object;
-    } else if constexpr (trait::is_free_fn) {
-      return CallableType::free_function_pointer;
-    } else if constexpr (trait::is_member_fn) {
-      return CallableType::member_fuction_pointer;
-    } else if constexpr (trait::is_member_ptr) {
-      return CallableType::member_variable_pointer;
-    } else {
-      static_assert(Fail<trait>::value);
-    }
-  }
-
-public:
-  static constexpr CallableType value = get_callable_type();
-};
-
-template <auto fn>
-static constexpr auto callable_v = callable<fn>::value;
-
-template <auto f>
-struct call {
-private:
-  template <typename Invocable>
-  static constexpr decltype(&Invocable::operator()) call_type(decltype(&Invocable::operator())) {
-    return &decltype(f)::operator();
-  }
-  template <typename Fn>
-  static constexpr decltype(f) call_type(...) {
-    return f;
-  }
-
-public:
-  using type                  = decltype(call_type<decltype(f)>(0));
-  static constexpr auto value = call_type<decltype(f)>(0);
-};
-
-template <auto fn>
-using call_t = typename call<fn>::type;
-
-template <auto fn>
-static constexpr auto call_v = call<fn>::value;
-
-template <typename T,
-          T fn,
-          template <typename>
-          class mapper,
-          CallableType callable_type = callable_v<fn>,
-          typename Args              = typename fn_trait<call_t<fn>>::arguments>
+template <auto fn,
+          template <typename> class mapper = simple_mapper_t,
+          typename Fn                      = strip_qualifier_t<decltype(fn)>,
+          CallableType callable_type       = callable_v<Fn>,
+          typename Args                    = typename fn_trait<callable_t<Fn>>::arguments>
 struct SingleFnImpl;
 
-template <typename T, T fn, template <typename> class object_mapper_t, typename... Args>
-struct SingleFnImpl<T, fn, /*dummy*/ object_mapper_t, CallableType::callable_object, type_list<Args...>> {
-  constexpr auto operator()(Args... args) const noexcept(fn_trait<call_t<fn>>::is_noexcept) -> decltype(auto) {
-    return fn(detail::forward<Args>(args)...);
-  }
-};
-
-template <typename T, T fn, template <typename> class object_mapper_t, typename... Args>
-struct SingleFnImpl<T, fn, /*dummy*/ object_mapper_t, CallableType::free_function_pointer, type_list<Args...>> {
-  constexpr auto operator()(Args... args) const noexcept(fn_trait<T>::is_noexcept) -> decltype(auto) {
-    return fn(detail::forward<Args>(args)...);
-  }
-};
-
-template <typename T, T fn, template <typename> class object_mapper_t, typename... Args>
-struct SingleFnImpl<T, fn, object_mapper_t, CallableType::member_fuction_pointer, type_list<Args...>> {
-  constexpr auto operator()(object_mapper_t<T> object, Args... args) const noexcept(fn_trait<T>::is_noexcept)
+template <auto fn, template <typename> class object_mapper_t, typename Fn, typename... Args>
+struct SingleFnImpl<fn, /*dummy*/ object_mapper_t, Fn, CallableType::callable_object, type_list<Args...>> {
+  constexpr auto operator()(Args... args) const noexcept(fn_trait<callable_t<decltype(fn)>>::is_noexcept)
       -> decltype(auto) {
+    return fn(detail::forward<Args>(args)...);
+  }
+};
+
+template <auto fn, template <typename> class object_mapper_t, typename Fn, typename... Args>
+struct SingleFnImpl<fn, /*dummy*/ object_mapper_t, Fn, CallableType::free_function_pointer, type_list<Args...>> {
+  constexpr auto operator()(Args... args) const noexcept(fn_trait<Fn>::is_noexcept) -> decltype(auto) {
+    return fn(detail::forward<Args>(args)...);
+  }
+};
+
+template <auto fn, template <typename> class object_mapper_t, typename Fn, typename... Args>
+struct SingleFnImpl<fn, object_mapper_t, Fn, CallableType::member_fuction_pointer, type_list<Args...>> {
+  constexpr auto operator()(object_mapper_t<Fn> object, Args... args) const
+      noexcept(fn_trait<decltype(fn)>::is_noexcept) -> decltype(auto) {
     return (detail::forward<decltype(object)>(object).*fn)(detail::forward<Args>(args)...);
   }
 };
 
-template <typename T, T fn, template <typename> class object_mapper_t>
-struct SingleFnImpl<T, fn, object_mapper_t, CallableType::member_variable_pointer, type_list<>> {
-  constexpr auto operator()(object_mapper_t<T> object) const noexcept -> decltype(auto) {
+template <auto fn, template <typename> class object_mapper_t, typename Fn>
+struct SingleFnImpl<fn, object_mapper_t, Fn, CallableType::member_variable_pointer, type_list<>> {
+  constexpr auto operator()(object_mapper_t<Fn> object) const noexcept -> decltype(auto) {
     return object.*fn;
   }
 };
 
-template <typename T,
-          T fn,
-          typename mappers           = overloading_mappers_t<call_t<fn>>,
-          CallableType callable_type = callable_v<fn>,
-          typename Args              = typename fn_trait<call_t<fn>>::arguments>
+template <auto fn,
+          typename mappers           = overloading_mappers_t<strip_qualifier_t<decltype(fn)>>,
+          typename Fn                = strip_qualifier_t<decltype(fn)>,
+          CallableType callable_type = callable_v<Fn>,
+          typename Args              = typename fn_trait<Fn>::arguments>
 struct OverloadingFnImpl;
 
-template <typename T, T fn, template <typename> class... mappers, typename... Args>
-struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, CallableType::callable_object, type_list<Args...>>
-    : SingleFnImpl<T, fn, simple_mapper, CallableType::callable_object, type_list<Args...>> {
-  using SingleFnImpl<T, fn, simple_mapper, CallableType::callable_object, type_list<Args...>>::operator();
+template <auto fn, template <typename> class... mappers, typename Fn>
+struct OverloadingFnImpl<fn, higher_order_type_list<mappers...>, Fn, CallableType::callable_object> : SingleFnImpl<fn> {
+  using SingleFnImpl<fn>::operator();
 };
 
-template <typename T, T fn, typename... Args>
-struct OverloadingFnImpl<T, fn, type_list<>, CallableType::free_function_pointer, type_list<Args...>>
-    : SingleFnImpl<T, fn, /*dummy*/ simple_mapper_t, CallableType::free_function_pointer, type_list<Args...>> {
-  using SingleFnImpl<T, fn, simple_mapper_t, CallableType::free_function_pointer, type_list<Args...>>::operator();
+template <auto fn, typename Fn>
+struct OverloadingFnImpl<fn, type_list<>, Fn, CallableType::free_function_pointer>
+    : SingleFnImpl<fn, /*dummy*/ simple_mapper_t, Fn, CallableType::free_function_pointer> {
+  using SingleFnImpl<fn>::operator();
 };
 
-template <typename T, T fn, template <typename> class... mappers, typename... Args>
-struct OverloadingFnImpl<T,
-                         fn,
-                         higher_order_type_list<mappers...>,
-                         CallableType::member_fuction_pointer,
-                         type_list<Args...>>
-    : SingleFnImpl<T, fn, mappers, CallableType::member_fuction_pointer, type_list<Args...>>... {
-  using SingleFnImpl<T, fn, mappers, CallableType::member_fuction_pointer, type_list<Args...>>::operator()...;
+template <auto fn, template <typename> class... mappers, typename Fn>
+struct OverloadingFnImpl<fn, higher_order_type_list<mappers...>, Fn, CallableType::member_fuction_pointer>
+    : SingleFnImpl<fn, mappers>... {
+  using SingleFnImpl<fn, mappers>::operator()...;
 };
 
-template <typename T, T fn, template <typename> class... mappers>
-struct OverloadingFnImpl<T, fn, higher_order_type_list<mappers...>, CallableType::member_variable_pointer, type_list<>>
-    : SingleFnImpl<T, fn, mappers, CallableType::member_variable_pointer, type_list<>>... {
-  using SingleFnImpl<T, fn, mappers, CallableType::member_variable_pointer, type_list<>>::operator()...;
+template <auto fn, template <typename> class... mappers, typename Fn>
+struct OverloadingFnImpl<fn, higher_order_type_list<mappers...>, Fn, CallableType::member_variable_pointer>
+    : SingleFnImpl<fn, mappers>... {
+  using SingleFnImpl<fn, mappers>::operator()...;
 };
+
 } // namespace detail
+
 template <auto f>
-struct fn : detail::SingleFnImpl<decltype(f), f, detail::simple_mapper_t> {
-  using detail::SingleFnImpl<decltype(f), f, detail::simple_mapper_t>::operator();
+constexpr auto fn = detail::SingleFnImpl<f>{};
+
+template <auto f>
+constexpr auto over_fn = detail::OverloadingFnImpl<f>{};
+
+template <typename F,
+          detail::CallableType             = detail::callable_v<detail::strip_qualifier_t<F>>,
+          typename Args                    = typename fn_trait<detail::strip_qualifier_t<F>>::arguments,
+          template <typename> typename map = detail::simple_mapper_t>
+struct Fn;
+
+template <typename Invocable>
+struct Fn<Invocable, detail::CallableType::callable_object> : Invocable {
+  using Invocable::Invocable;
+  using Invocable::operator();
+
+  Fn() = default;
+
+  explicit Fn(Invocable const &fn)
+      : Invocable{fn} {}
+  explicit Fn(Invocable &&fn)
+      : Invocable{static_cast<Invocable &&>(fn)} {}
 };
-template <auto f>
-struct overloading_fn : detail::OverloadingFnImpl<decltype(f), f> {
-  using detail::OverloadingFnImpl<decltype(f), f>::operator();
+
+template <typename Ptr, typename... Args>
+struct Fn<Ptr, detail::CallableType::free_function_pointer, type_list<Args...>> {
+  Ptr ptr;
+
+  constexpr auto operator()(Args... args) const noexcept(noexcept(ptr(detail::forward<Args>(args)...)))
+      -> decltype(auto) {
+    return ptr(detail::forward<Args>(args)...);
+  }
 };
+template <typename Ptr, typename... Args, template <typename> typename map>
+struct Fn<Ptr, detail::CallableType::member_fuction_pointer, type_list<Args...>, map> {
+  Ptr ptr;
+
+  constexpr auto
+  operator()(map<typename fn_trait<Ptr>::object_type> object, typename fn_trait<Ptr>::object_t, Args... args) const
+      noexcept(noexcept(detail::forward<decltype(object)>(object).*ptr(detail::forward<Args>(args)...)))
+          -> decltype(auto) {
+    return detail::forward<decltype(object)>(object).*ptr(detail::forward<Args>(args)...);
+  }
+};
+template <typename Ptr, template <typename> typename map>
+struct Fn<Ptr, detail::CallableType::member_variable_pointer, type_list<>, map> {
+  Ptr ptr;
+
+  constexpr auto operator()(map<typename fn_trait<Ptr>::object_type> object) const noexcept -> decltype(auto) {
+    return object.*ptr;
+  }
+};
+
+template <typename T>
+Fn(T) -> Fn<T>;
+
 template <auto f>
-struct fn_trait<fn<f>> : fn_trait<detail::call_t<f>> {};
-template <auto f>
-struct fn_trait<overloading_fn<f>> : fn_trait<detail::call_t<f>> {};
-template <auto f>
-using fn_trait_of = fn_trait<detail::call_t<f>>;
+using fn_trait_of = fn_trait<detail::callable_t<detail::strip_qualifier_t<decltype(f)>>>;
 } // namespace river
 #endif

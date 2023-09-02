@@ -288,9 +288,15 @@ TEST_CASE("fn_trait should return a type that contains the correct information a
   CHECK(std::is_same_v<fn_trait<rvalue_noexcept_cv_memfn>::return_type, int>);
   CHECK(std::is_same_v<fn_trait<rvalue_noexcept_cv_memfn>::object_type, A>);
   CHECK(std::is_same_v<fn_trait<rvalue_noexcept_cv_memfn>::arguments, type_list<>>);
-}
 
-TEST_CASE("fn_trait on `fn` and `overloading_fn` gives the trait on their underlying function pointer") {
-  CHECK(std::is_base_of_v<fn_trait<noexcept_fn_ptr>, fn_trait<fn<&fn_noexcept>>>);
-  CHECK(std::is_base_of_v<fn_trait<rvalue_noexcept_cv_memfn>, fn_trait<fn<&A::rvalue_fn_const_volatile_noexcept>>>);
+  CHECK_FALSE(fn_trait<Invocable>::is_free_fn);
+  CHECK(fn_trait<Invocable>::is_member_fn);
+  CHECK_FALSE(fn_trait<Invocable>::is_lvalue_ref);
+  CHECK_FALSE(fn_trait<Invocable>::is_rvalue_ref);
+  CHECK_FALSE(fn_trait<Invocable>::is_const);
+  CHECK_FALSE(fn_trait<Invocable>::is_volatile);
+  CHECK_FALSE(fn_trait<Invocable>::is_noexcept);
+  CHECK(std::is_same_v<fn_trait<Invocable>::return_type, int>);
+  CHECK(std::is_same_v<fn_trait<Invocable>::object_type, Invocable>);
+  CHECK(std::is_same_v<fn_trait<Invocable>::arguments, type_list<>>);
 }

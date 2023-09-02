@@ -12,7 +12,7 @@ struct UserClass {
 using namespace river;
 
 struct A {
-  auto operator()() const {
+  constexpr auto operator()() const {
     return 1;
   }
 };
@@ -26,6 +26,11 @@ TEST_CASE("fn_trait_of invocables will look at its operator() if possible, then 
 }
 
 TEST_CASE("fn works with invocables") {
-  STATIC_CHECK(fn<[] { return 1; }>{}() == 1);
-  CHECK(overloading_fn<A{}>{}() == 1);
+  STATIC_CHECK(fn<[] { return 1; }>() == 1);
+  STATIC_CHECK(fn<A{}>() == 1);
+  STATIC_CHECK(over_fn<A{}>() == 1);
+}
+
+TEST_CASE("Fn works with invocables") {
+  CHECK(Fn{[] { return 1; }}());
 }

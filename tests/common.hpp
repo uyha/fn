@@ -57,16 +57,16 @@ struct A {
   int lvalue_fn_const_volatile() const volatile & {
     return a;
   }
-  int lvalue_fn_noexcept() &noexcept {
+  int lvalue_fn_noexcept() & noexcept {
     return a;
   }
-  int lvalue_fn_const_noexcept() const &noexcept {
+  int lvalue_fn_const_noexcept() const & noexcept {
     return a;
   }
-  int lvalue_fn_volatile_noexcept() volatile &noexcept {
+  int lvalue_fn_volatile_noexcept() volatile & noexcept {
     return a;
   }
-  int lvalue_fn_const_volatile_noexcept() const volatile &noexcept {
+  int lvalue_fn_const_volatile_noexcept() const volatile & noexcept {
     return a;
   }
 
@@ -82,16 +82,16 @@ struct A {
   int rvalue_fn_const_volatile() const volatile && {
     return a;
   }
-  int rvalue_fn_noexcept() &&noexcept {
+  int rvalue_fn_noexcept() && noexcept {
     return a;
   }
-  int rvalue_fn_const_noexcept() const &&noexcept {
+  int rvalue_fn_const_noexcept() const && noexcept {
     return a;
   }
-  int rvalue_fn_volatile_noexcept() volatile &&noexcept {
+  int rvalue_fn_volatile_noexcept() volatile && noexcept {
     return a;
   }
-  int rvalue_fn_const_volatile_noexcept() const volatile &&noexcept {
+  int rvalue_fn_const_volatile_noexcept() const volatile && noexcept {
     return a;
   }
 };
@@ -109,16 +109,20 @@ using lvalue_memfn                   = int (A::*)() &;
 using lvalue_const_memfn             = int (A::*)() const &;
 using lvalue_volatile_memfn          = int (A::*)() volatile &;
 using lvalue_cv_memfn                = int (A::*)() const volatile &;
-using lvalue_noexcept_memfn          = int (A::*)() &noexcept;
-using lvalue_noexcept_const_memfn    = int (A::*)() const &noexcept;
-using lvalue_noexcept_volatile_memfn = int (A::*)() volatile &noexcept;
-using lvalue_noexcept_cv_memfn       = int (A::*)() const volatile &noexcept;
+using lvalue_noexcept_memfn          = int (A::*)()          &noexcept;
+using lvalue_noexcept_const_memfn    = int (A::*)() const    &noexcept;
+using lvalue_noexcept_volatile_memfn = int (A::*)() volatile & noexcept;
+using lvalue_noexcept_cv_memfn       = int (A::*)() const volatile       &noexcept;
 
 using rvalue_memfn                   = int (A::*)() &&;
 using rvalue_const_memfn             = int (A::*)() const &&;
 using rvalue_volatile_memfn          = int (A::*)() volatile &&;
 using rvalue_cv_memfn                = int (A::*)() const volatile &&;
-using rvalue_noexcept_memfn          = int (A::*)() &&noexcept;
-using rvalue_noexcept_const_memfn    = int (A::*)() const &&noexcept;
-using rvalue_noexcept_volatile_memfn = int (A::*)() volatile &&noexcept;
-using rvalue_noexcept_cv_memfn       = int (A::*)() const volatile &&noexcept;
+using rvalue_noexcept_memfn          = int (A::*)()          &&noexcept;
+using rvalue_noexcept_const_memfn    = int (A::*)() const    &&noexcept;
+using rvalue_noexcept_volatile_memfn = int (A::*)() volatile && noexcept;
+using rvalue_noexcept_cv_memfn       = int (A::*)() const volatile       &&noexcept;
+
+struct Invocable {
+  int operator()();
+};
