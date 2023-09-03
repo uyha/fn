@@ -359,7 +359,7 @@ struct add_ref<T &&> {
 template <typename T>
 using add_ref_t = typename add_ref<T>::type;
 
-template <auto fn, FnType callable_type = fn_trait_of<fn>::type, typename Args = fn_trait_of<fn>::arguments>
+template <auto fn, FnType callable_type = fn_trait_of<fn>::type, typename Args = typename fn_trait_of<fn>::arguments>
 struct fn_impl;
 
 template <auto fn, typename... Args>
@@ -388,7 +388,7 @@ struct fn_impl<fn, FnType::member_var_ptr, type_list<>> {
   }
 };
 
-template <auto fn, FnType callable_type = fn_trait_of<fn>::type, typename Args = fn_trait_of<fn>::arguments>
+template <auto fn, FnType callable_type = fn_trait_of<fn>::type, typename Args = typename fn_trait_of<fn>::arguments>
 struct over_fn_impl : fn_impl<fn, callable_type, Args> {
   using fn_impl<fn, callable_type, Args>::operator();
 };
