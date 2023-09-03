@@ -84,12 +84,15 @@ TEST_CASE("over_fn can be called with the appropriate argument according to C++ 
 
     CHECK(over_fn<&A::lvalue_fn_const>(lvalue) == 0);
     CHECK(over_fn<&A::lvalue_fn_const>(const_lvalue) == 0);
-    CHECK(over_fn<&A::lvalue_fn_const>(std::move(lvalue)) == 0);
-    CHECK(over_fn<&A::lvalue_fn_const>(std::move(const_lvalue)) == 0);
     CHECK(over_fn<&A::lvalue_fn_const_noexcept>(lvalue) == 0);
     CHECK(over_fn<&A::lvalue_fn_const_noexcept>(const_lvalue) == 0);
+
+#if __cplusplus >= 202002L
+    CHECK(over_fn<&A::lvalue_fn_const>(std::move(lvalue)) == 0);
+    CHECK(over_fn<&A::lvalue_fn_const>(std::move(const_lvalue)) == 0);
     CHECK(over_fn<&A::lvalue_fn_const_noexcept>(std::move(lvalue)) == 0);
     CHECK(over_fn<&A::lvalue_fn_const_noexcept>(std::move(const_lvalue)) == 0);
+#endif
 
     CHECK(over_fn<&A::rvalue_fn_const>(std::move(lvalue)) == 0);
     CHECK(over_fn<&A::rvalue_fn_const>(std::move(const_lvalue)) == 0);
@@ -582,8 +585,6 @@ TEST_CASE("OverFn with member functions") {
     SECTION("rvalue can be called with any rvalue function") {
       CHECK(OverFn{&A::fn_const}(std::move(lvalue)) == lvalue.a);
       CHECK(OverFn{&A::fn_const_noexcept}(std::move(lvalue)) == lvalue.a);
-      CHECK(OverFn{&A::lvalue_fn_const}(std::move(lvalue)) == lvalue.a);
-      CHECK(OverFn{&A::lvalue_fn_const_noexcept}(std::move(lvalue)) == lvalue.a);
       CHECK(OverFn{&A::rvalue_fn}(std::move(lvalue)) == lvalue.a);
       CHECK(OverFn{&A::rvalue_fn_const}(std::move(lvalue)) == lvalue.a);
       CHECK(OverFn{&A::rvalue_fn_volatile}(std::move(lvalue)) == lvalue.a);
@@ -592,16 +593,24 @@ TEST_CASE("OverFn with member functions") {
       CHECK(OverFn{&A::rvalue_fn_const_noexcept}(std::move(lvalue)) == lvalue.a);
       CHECK(OverFn{&A::rvalue_fn_volatile_noexcept}(std::move(lvalue)) == lvalue.a);
       CHECK(OverFn{&A::rvalue_fn_const_volatile_noexcept}(std::move(lvalue)) == lvalue.a);
+
+#if __cplusplus >= 202002L
+      CHECK(OverFn{&A::lvalue_fn_const}(std::move(lvalue)) == lvalue.a);
+      CHECK(OverFn{&A::lvalue_fn_const_noexcept}(std::move(lvalue)) == lvalue.a);
+#endif
     }
     SECTION("const rvalue can be called with any const rvalue function") {
       CHECK(OverFn{&A::fn_const}(std::move(const_lvalue)) == const_lvalue.a);
       CHECK(OverFn{&A::fn_const_noexcept}(std::move(const_lvalue)) == const_lvalue.a);
-      CHECK(OverFn{&A::lvalue_fn_const}(std::move(const_lvalue)) == const_lvalue.a);
-      CHECK(OverFn{&A::lvalue_fn_const_noexcept}(std::move(const_lvalue)) == const_lvalue.a);
       CHECK(OverFn{&A::rvalue_fn_const}(std::move(const_lvalue)) == const_lvalue.a);
       CHECK(OverFn{&A::rvalue_fn_const_volatile}(std::move(const_lvalue)) == const_lvalue.a);
       CHECK(OverFn{&A::rvalue_fn_const_noexcept}(std::move(const_lvalue)) == const_lvalue.a);
       CHECK(OverFn{&A::rvalue_fn_const_volatile_noexcept}(std::move(const_lvalue)) == const_lvalue.a);
+
+#if __cplusplus >= 202002L
+      CHECK(OverFn{&A::lvalue_fn_const}(std::move(const_lvalue)) == const_lvalue.a);
+      CHECK(OverFn{&A::lvalue_fn_const_noexcept}(std::move(const_lvalue)) == const_lvalue.a);
+#endif
     }
     SECTION("volatile rvalue can be called with any volatile rvalue function") {
       CHECK(OverFn{&A::rvalue_fn_volatile}(std::move(volatile_lvalue)) == volatile_lvalue.a);
