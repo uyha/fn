@@ -40,6 +40,9 @@ template <typename>
 struct Fail : std::false_type {};
 
 template <typename T>
+constexpr auto fail_v = Fail<T>::value;
+
+template <typename T>
 struct strip_qualifier {
   using type = T;
 };
@@ -103,7 +106,10 @@ template <typename T>
 using strip_qualifier_t = typename strip_qualifier<T>::type;
 
 template <typename T>
-struct fn_trait_impl;
+struct fn_trait_impl {
+  static_assert(fail_v<T>, "Could not deduce the trait of the given type");
+};
+
 template <typename R, typename... Args>
 struct fn_trait_impl<R (*)(Args...)> {
   static constexpr bool is_free_fn    = true;
