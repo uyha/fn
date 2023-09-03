@@ -63,35 +63,56 @@ your project and start using it. This library requires C++17.
 
 ## Features
 
-This library provides 1 trait and 2 wrapper classes. The trait `fn_trait` provides details about a (member) function
-pointer. For free function pointers, the following information is available:
+### `fn_trait`
 
-- type = `river::FnType::free_fn_ptr`
-- `is_noexcept`
-- `return_t`
-- `arguments`: The argument types are stored in the `type_list` type. To use it, create a template with a type template
-  parameter, then specialize it with a type template parameter pack.
+This library provides the `fn_trait` class that provides details about:
+
+- invocables (classes with an `operator()`, passing classes with an overload set of
+  `operator()` will create a compile time error)
+- free function pointers
+- member function pointers
+- member variable pointers
+
+The following table shows the details provided by the `fn_trait`:
+
+| Input                    | `type`                   | `is_noexcept` | `return_t` | `object_t` | `arguments`          |
+| ------------------------ | ------------------------ | ------------- | ---------- | ---------- | -------------------- |
+| Invocables               | `FnType::invocable`      | `bool`        | `R`        | `T`        | `type_list<Args...>` |
+| Free function pointers   | `FnType::free_fn_ptr`    | `bool`        | `R`        | -          | `type_list<Args...>` |
+| Member function pointers | `FnType::member_fn_ptr`  | `bool`        | `R`        | `T`        | `type_list<Args...>` |
+| Member variable pointers | `FnType::member_var_ptr` | -             | `R`        | `T`        | `type_list<>`        |
+
+`fn_trait<T>::arguments` is a `river::type_list`, in other to use this list, you
+can have a function template that accepts `river::type_list` as normal parameter and
+have the template parameters being a pack. The following snippet demonstrate this:
 
 ```cpp
-template<typename T>
-struct get_args;
 template<typename... Args>
-struct get_args<type_list<Args...>>{};
+auto use_args(river::type_list<Args...>) {
+  // do something with `Args`
+}
+
+// `Args` will be `int`, `bool`
+use_args(river::fn_trait<void(*)(int, bool)>::arguments{});
+
+// lambda
+void unpack_with_lambda() {
+  auto lambda = []<typename... Args>(river::type_list<Args...>) {
+    //do something with `Args`
+  };
+
+  // `Args` will be `int`, `bool`
+  lambda(river::fn_trait<void (*)(int, bool)>::arguments{});
+}
 ```
 
-For member function pointers or member variable pointers, in addition to the information for free function pointers,
-the following information is also available:
-
-- type = `river::FnType::member_fn_ptr` | `river::FnType::member_var_ptr`
-- `object_t`
-
-This library was originally developed to provide a feature for constructing guards and actions for [sml][sml] easily
-from free functions and member functions. The `fn` class template is designed for that (although it fails to compile
-on MSVC when propagating `noexcept`). `fn` provides just one `operator()` function that accepts a reasonable set of
-arguments and not an overload set of it since **sml** fails to call the correct function when there is an overload set.
-
-If you need an object that can be called with all the possible valid arguments, then `overloading_fn` should be used
-instead.
+This library was originally developed to provide a feature for constructing guards and
+actions for [sml][sml] easily from free functions and member functions. The `fn` class
+template is designed for that (although it fails to compile on MSVC when propagating
+`noexcept`). `fn` provides just one `operator()` function that accepts a reasonable set
+of arguments and not an overload set of it since **sml** fails to call the correct
+function when there is an overload set. If you need an object that can be called with
+all the possible valid arguments, then `overloading_fn` should be used instead.
 
 If you want to create the function objects with runtime arguments, you can use `Fn` and
 `OverFn`. They have the equivalent functionality with `fn`, and `over_fn`, but they
@@ -100,11 +121,12 @@ parameters.
 
 ## Performance
 
-This library incurs no overhead when `fn` and `overloading_fn` are used in `constexpr` context and maximum optimization.
+This library incurs no overhead when `fn` and `overloading_fn` are used in `constexpr`
+context and/or maximum optimization.
 
 ### Same TU function pointer
 
-https://godbolt.org/z/M8xxh1
+https://godbolt.org/z/E14P31dvK
 
 ```cpp
 #include <river/fn.hpp>
@@ -130,7 +152,7 @@ main:
 
 ### Different TU function pointer
 
-https://godbolt.org/z/rf5zfE
+https://godbolt.org/z/s6rnr835M
 
 ```cpp
 #include <river/fn.hpp>
