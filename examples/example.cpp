@@ -29,7 +29,7 @@ int main() {
   mem_var(a);
 
   static_assert(river::fn_trait<Callable>::type == river::FnType::invocable);
-  constexpr auto callable = river::fn<Callable{}>;
+  constexpr auto callable = river::Fn{Callable{}};
   callable();
 
   A const b{};
