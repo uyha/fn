@@ -19,9 +19,16 @@ struct A {
 
 TEST_CASE("fn_trait_of invocables will look at its operator() if possible, then it will look at the given value") {
   constexpr auto lambda = [] {};
+  using lambda_type     = decltype(lambda);
 
-  STATIC_CHECK(std::is_same_v<fn_trait_of<lambda>, fn_trait<void (decltype(lambda)::*)() const>>);
-  STATIC_CHECK(std::is_same_v<fn_trait_of<UserClass{}>, fn_trait<void (UserClass::*)(int)>>);
+  STATIC_CHECK(std::is_same_v<fn_trait_of<lambda>::object_t, fn_trait<decltype(&lambda_type::operator())>::object_t>);
+  STATIC_CHECK(std::is_same_v<fn_trait_of<lambda>::return_t, fn_trait<decltype(&lambda_type::operator())>::return_t>);
+  STATIC_CHECK(std::is_same_v<fn_trait_of<lambda>::arguments, fn_trait<decltype(&lambda_type::operator())>::arguments>);
+
+  STATIC_CHECK(std::is_same_v<fn_trait_of<A{}>::object_t, fn_trait<decltype(&A::operator())>::object_t>);
+  STATIC_CHECK(std::is_same_v<fn_trait_of<A{}>::return_t, fn_trait<decltype(&A::operator())>::return_t>);
+  STATIC_CHECK(std::is_same_v<fn_trait_of<A{}>::arguments, fn_trait<decltype(&A::operator())>::arguments>);
+
   STATIC_CHECK(std::is_same_v<fn_trait_of<&UserClass::a>, fn_trait<int UserClass::*>>);
 }
 
@@ -32,5 +39,13 @@ TEST_CASE("fn works with invocables") {
 }
 
 TEST_CASE("Fn works with invocables") {
-  CHECK(Fn{[] { return 1; }}());
+  constexpr auto lambda = [] { return 1; };
+  STATIC_CHECK(Fn{lambda}() == 1);
+  STATIC_CHECK(Fn{A{}}() == 1);
+}
+
+TEST_CASE("Fn has equal size to invocables") {
+  constexpr auto lambda = [] { return 1; };
+  STATIC_CHECK(sizeof(Fn<decltype(lambda)>) == sizeof(lambda));
+  STATIC_CHECK(sizeof(Fn<A>) == sizeof(A));
 }

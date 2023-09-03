@@ -9,15 +9,28 @@ struct A {
   int a{0};
 };
 
+struct Callable {
+  void operator()() const {}
+};
+
 int main() {
+  static_assert(river::fn_trait_of<function>::type == river::FnType::free_fn_ptr);
   constexpr auto func = river::fn<function>;
-  static_assert(river::fn_trait_of<function>::is_free_fn);
   func();
 
-  auto mem_func = river::fn<&A::function>;
-  static_assert(river::fn_trait_of<&A::function>::is_member_fn);
   A a{};
+
+  static_assert(river::fn_trait_of<&A::function>::type == river::FnType::member_fn_ptr);
+  constexpr auto mem_func = river::fn<&A::function>;
   mem_func(a);
+
+  static_assert(river::fn_trait_of<&A::a>::type == river::FnType::member_var_ptr);
+  constexpr auto mem_var = river::fn<&A::a>;
+  mem_var(a);
+
+  static_assert(river::fn_trait<Callable>::type == river::FnType::invocable);
+  constexpr auto callable = river::fn<Callable{}>;
+  callable();
 
   A const b{};
   auto overloading_func = river::over_fn<&A::function>;
