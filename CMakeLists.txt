@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.12)
 project("fn"
-        VERSION 0.3
+        VERSION 0.4
         # There is a bug in conan.cmake that make libraries fail to build if LANGUAGES is specified with only CXX
         LANGUAGES C CXX)
 
