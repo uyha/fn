@@ -33,9 +33,9 @@ TEST_CASE("fn_trait_of invocables will look at its operator() if possible, then 
 }
 
 TEST_CASE("fn works with invocables") {
-  STATIC_CHECK(fn<[] { return 1; }>() == 1);
-  STATIC_CHECK(fn<A{}>() == 1);
-  STATIC_CHECK(over_fn<A{}>() == 1);
+  STATIC_CHECK(fn<[] { return 1; }>{}() == 1);
+  STATIC_CHECK(fn<A{}>{}() == 1);
+  STATIC_CHECK(over_fn<A{}>{}() == 1);
 }
 
 TEST_CASE("Fn works with invocables") {

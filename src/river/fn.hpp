@@ -407,13 +407,12 @@ struct over_fn_impl<fn, FnType::member_var_ptr, type_list<>> {
     return detail::forward<T>(object).*fn;
   }
 };
-
 } // namespace detail
 
 template <auto f>
-constexpr auto fn = detail::fn_impl<f>{};
+using fn = detail::fn_impl<f>;
 template <auto f>
-constexpr auto over_fn = detail::over_fn_impl<f>{};
+using over_fn = detail::over_fn_impl<f>;
 
 template <typename F, FnType = fn_trait<F>::type, typename Args = typename fn_trait<F>::arguments>
 struct Fn;
