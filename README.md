@@ -75,12 +75,12 @@ This library provides the `fn_trait` class that provides details about:
 
 The following table shows the details provided by the `fn_trait`:
 
-| Input                    | `type`                   | `is_noexcept` | `return_t` | `object_t` | `arguments`          |
-| ------------------------ | ------------------------ | ------------- | ---------- | ---------- | -------------------- |
-| Invocables               | `FnType::invocable`      | `bool`        | `R`        | `T`        | `type_list<Args...>` |
-| Free function pointers   | `FnType::free_fn_ptr`    | `bool`        | `R`        | -          | `type_list<Args...>` |
-| Member function pointers | `FnType::member_fn_ptr`  | `bool`        | `R`        | `T`        | `type_list<Args...>` |
-| Member variable pointers | `FnType::member_var_ptr` | -             | `R`        | `T`        | `type_list<>`        |
+| Input                    | `FnType`         | `is_noexcept` | `return_t` | `object_t` | `arguments`          |
+| ------------------------ | ---------------- | ------------- | ---------- | ---------- | -------------------- |
+| Invocables               | `invocable`      | `bool`        | `R`        | `T`        | `type_list<Args...>` |
+| Free function pointers   | `free_fn_ptr`    | `bool`        | `R`        | -          | `type_list<Args...>` |
+| Member function pointers | `member_fn_ptr`  | `bool`        | `R`        | `T`        | `type_list<Args...>` |
+| Member variable pointers | `member_var_ptr` | -             | `R`        | `T`        | `type_list<>`        |
 
 `fn_trait<T>::arguments` is a `river::type_list`, in other to use this list, you
 can have a function template that accepts `river::type_list` as normal parameter and
